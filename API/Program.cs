@@ -1,54 +1,64 @@
 using Microsoft.EntityFrameworkCore;
+using SecurityAssessmentAPI.DAL;
+using SecurityAssessmentAPI.DAL.Interfaces;
+using SecurityAssessmentAPI.DAL.Repositories;
+using SecurityAssessmentAPI.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
 builder.Services.AddControllers();
+builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddOpenApi();
+builder.Services.AddSwaggerGen();
 
-// Entity Framework and DI
-builder.Services.AddDbContext<SecurityAssessmentAPI.DAL.ApplicationDbContext>(options =>
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseInMemoryDatabase("SecurityAssessmentDb"));
 
-builder.Services.AddScoped<SecurityAssessmentAPI.DAL.Interfaces.ICustomerRepository, SecurityAssessmentAPI.DAL.Repositories.CustomerRepository>();
-builder.Services.AddScoped<SecurityAssessmentAPI.DAL.Interfaces.IAssetRepository, SecurityAssessmentAPI.DAL.Repositories.AssetRepository>();
-builder.Services.AddScoped<SecurityAssessmentAPI.DAL.Interfaces.IAssessmentRunRepository, SecurityAssessmentAPI.DAL.Repositories.AssessmentRunRepository>();
-builder.Services.AddScoped<SecurityAssessmentAPI.DAL.Interfaces.ICheckTypeRepository, SecurityAssessmentAPI.DAL.Repositories.CheckTypeRepository>();
-builder.Services.AddScoped<SecurityAssessmentAPI.DAL.Interfaces.ICheckResultRepository, SecurityAssessmentAPI.DAL.Repositories.CheckResultRepository>();
-builder.Services.AddScoped<SecurityAssessmentAPI.DAL.Interfaces.IFindingRepository, SecurityAssessmentAPI.DAL.Repositories.FindingRepository>();
+builder.Services.AddScoped<ICustomerRepository, CustomerRepository>();
+builder.Services.AddScoped<IAssetRepository, AssetRepository>();
+builder.Services.AddScoped<IAssessmentRunRepository, AssessmentRunRepository>();
+builder.Services.AddScoped<ICheckTypeRepository, CheckTypeRepository>();
+builder.Services.AddScoped<ICheckResultRepository, CheckResultRepository>();
+builder.Services.AddScoped<IFindingRepository, FindingRepository>();
+
+builder.Services.AddScoped<IAssessmentCheckingService, AssessmentCheckingService>();
+builder.Services.AddScoped<ISslCheckingService, SslCheckingService>();
+builder.Services.AddScoped<IHeadersCheckingService, HeadersCheckingService>();
+builder.Services.AddScoped<IEmailCheckingService, EmailCheckingService>();
+builder.Services.AddScoped<IReputationCheckingService, ReputationCheckingService>();
+builder.Services.AddScoped<IPqcCheckingService, PqcCheckingService>();
+
+builder.Services.AddHttpClient<IDnsAnalysisClient, DnsAnalysisClient>();
+builder.Services.AddHttpClient<IHttpHeadersProbeClient, HttpHeadersProbeClient>(client =>
+{
+    client.Timeout = TimeSpan.FromSeconds(20);
+});
+builder.Services.AddHttpClient<IMozillaObservatoryClient, MozillaObservatoryClient>(client =>
+{
+    client.Timeout = TimeSpan.FromSeconds(30);
+});
+builder.Services.AddHttpClient<ISslLabsClient, SslLabsClient>(client =>
+{
+    client.Timeout = TimeSpan.FromSeconds(30);
+});
+builder.Services.AddHttpClient<IHardenizeClient, HardenizeClient>(client =>
+{
+    client.Timeout = TimeSpan.FromSeconds(20);
+});
+builder.Services.AddHttpClient<IVirusTotalClient, VirusTotalClient>(client =>
+{
+    client.Timeout = TimeSpan.FromSeconds(20);
+});
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
+    app.UseSwagger();
+    app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
-
-var summaries = new[]
-{
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
-
-app.MapGet("/weatherforecast", () =>
-{
-    var forecast =  Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
-    return forecast;
-})
-.WithName("GetWeatherForecast");
+app.MapControllers();
 
 app.Run();
-
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}
