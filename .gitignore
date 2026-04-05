@@ -1,12 +1,58 @@
-# Local app settings
+# ------------------------------
+# Project-specific local config
+# ------------------------------
 API/appsettings.Local.json
 
-# Build artifacts
+# ------------------------------
+# .NET build artifacts
+# ------------------------------
 **/bin/
 **/obj/
 
-# Local .NET CLI cache generated in repo root
+# Test outputs / coverage
+TestResults/
+coverage/
+coverage.*
+*.coverage
+*.coveragexml
+
+# Local .NET SDK/CLI cache (created when DOTNET_CLI_HOME points to repo)
 .dotnet/
 
+# ------------------------------
+# IDE and editor artifacts
+# ------------------------------
+.vs/
+.idea/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# VS Code local workspace storage
+.vscode/*.log
+
+# ------------------------------
+# Logs and temporary files
+# ------------------------------
+*.log
+*.tmp
+*.temp
+
+# ------------------------------
+# OS-generated files
+# ------------------------------
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# ------------------------------
+# Security / certificates
+# ------------------------------
+*.pfx
+*.snk
+
+# ------------------------------
 # Test runner output artifacts
+# ------------------------------
 Test/AssessmentBatchRunner/output/
