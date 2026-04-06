@@ -9,7 +9,6 @@ namespace SecurityAssessmentAPI.DAL
         {
         }
 
-        public DbSet<Customer> Customers { get; set; }
         public DbSet<Asset> Assets { get; set; }
         public DbSet<AssessmentRun> AssessmentRuns { get; set; }
         public DbSet<CheckType> CheckTypes { get; set; }
@@ -19,15 +18,6 @@ namespace SecurityAssessmentAPI.DAL
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
-
-            // Configure Customer
-            modelBuilder.Entity<Customer>()
-                .HasKey(c => c.CustomerId);
-
-            modelBuilder.Entity<Customer>()
-                .HasMany(c => c.Assets)
-                .WithOne(a => a.Customer)
-                .HasForeignKey(a => a.CustomerId);
 
             // Configure Asset
             modelBuilder.Entity<Asset>()

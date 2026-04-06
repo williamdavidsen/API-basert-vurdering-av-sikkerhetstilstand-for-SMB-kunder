@@ -7,39 +7,12 @@ namespace SecurityAssessmentAPI.DAL
 {
     public static class DtoMapper
     {
-        public static CustomerDto ToDto(this Customer entity)
-        {
-            if (entity == null) return null;
-            return new CustomerDto
-            {
-                CustomerId = entity.CustomerId,
-                Name = entity.Name,
-                Telefon = entity.Telefon,
-                Email = entity.Email,
-                Assets = entity.Assets?.Select(a => a.ToDto()).ToList() ?? new List<AssetDto>()
-            };
-        }
-
-        public static Customer ToEntity(this CustomerDto dto)
-        {
-            if (dto == null) return null;
-            return new Customer
-            {
-                CustomerId = dto.CustomerId,
-                Name = dto.Name,
-                Telefon = dto.Telefon,
-                Email = dto.Email,
-                Assets = dto.Assets?.Select(a => a.ToEntity()).ToList() ?? new List<Asset>()
-            };
-        }
-
         public static AssetDto ToDto(this Asset entity)
         {
             if (entity == null) return null;
             return new AssetDto
             {
                 AssetId = entity.AssetId,
-                CustomerId = entity.CustomerId,
                 AssetType = entity.AssetType.ToString(),
                 Value = entity.Value,
                 AssessmentRuns = entity.AssessmentRuns?.Select(ar => ar.ToDto()).ToList() ?? new List<AssessmentRunDto>()
@@ -52,7 +25,6 @@ namespace SecurityAssessmentAPI.DAL
             return new Asset
             {
                 AssetId = dto.AssetId,
-                CustomerId = dto.CustomerId,
                 AssetType = Enum.TryParse<AssetType>(dto.AssetType, true, out var type) ? type : AssetType.Domain,
                 Value = dto.Value,
                 AssessmentRuns = dto.AssessmentRuns?.Select(ar => ar.ToEntity()).ToList() ?? new List<AssessmentRun>()

@@ -17,7 +17,6 @@ namespace SecurityAssessmentAPI.DAL.Repositories
         public async Task<AssetDto> GetByIdAsync(int id)
         {
             var entity = await _context.Assets
-                .Include(a => a.Customer)
                 .Include(a => a.AssessmentRuns)
                 .FirstOrDefaultAsync(a => a.AssetId == id);
 
@@ -27,18 +26,7 @@ namespace SecurityAssessmentAPI.DAL.Repositories
         public async Task<IEnumerable<AssetDto>> GetAllAsync()
         {
             var entities = await _context.Assets
-                .Include(a => a.Customer)
                 .Include(a => a.AssessmentRuns)
-                .ToListAsync();
-
-            return entities.Select(a => a.ToDto());
-        }
-
-        public async Task<IEnumerable<AssetDto>> GetByCustomerIdAsync(int customerId)
-        {
-            var entities = await _context.Assets
-                .Include(a => a.AssessmentRuns)
-                .Where(a => a.CustomerId == customerId)
                 .ToListAsync();
 
             return entities.Select(a => a.ToDto());

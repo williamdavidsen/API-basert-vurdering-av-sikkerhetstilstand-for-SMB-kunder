@@ -15,7 +15,6 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseInMemoryDatabase("SecurityAssessmentDb"));
 
-builder.Services.AddScoped<ICustomerRepository, CustomerRepository>();
 builder.Services.AddScoped<IAssetRepository, AssetRepository>();
 builder.Services.AddScoped<IAssessmentRunRepository, AssessmentRunRepository>();
 builder.Services.AddScoped<ICheckTypeRepository, CheckTypeRepository>();

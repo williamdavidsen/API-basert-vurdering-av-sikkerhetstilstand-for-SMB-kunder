@@ -365,7 +365,7 @@ namespace SecurityAssessmentAPI.Services
                 return result;
             }
 
-            // Merge endpoint observations so one multi-IP host is scored as a single customer-facing surface.
+            // Merge endpoint observations so one multi-IP host is scored as a single external-facing surface.
             var protocols = response.Endpoints
                 .SelectMany(endpoint => endpoint.Details?.Protocols ?? Enumerable.Empty<SslLabsProtocol>())
                 .GroupBy(protocol => $"{protocol.Name}:{protocol.Version}", StringComparer.OrdinalIgnoreCase)
