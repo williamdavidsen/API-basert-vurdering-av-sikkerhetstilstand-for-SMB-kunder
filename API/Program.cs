@@ -41,10 +41,6 @@ builder.Services.AddHttpClient<ISslLabsClient, SslLabsClient>(client =>
 {
     client.Timeout = TimeSpan.FromSeconds(30);
 });
-builder.Services.AddHttpClient<IHardenizeClient, HardenizeClient>(client =>
-{
-    client.Timeout = TimeSpan.FromSeconds(20);
-});
 builder.Services.AddHttpClient<IVirusTotalClient, VirusTotalClient>(client =>
 {
     client.Timeout = TimeSpan.FromSeconds(20);

@@ -1,5 +1,6 @@
 using SecurityAssessmentAPI.DTOs;
 using System.Linq;
+using System.Net;
 using System.Net.Security;
 using System.Net.Sockets;
 using System.Security.Authentication;
@@ -10,6 +11,7 @@ namespace SecurityAssessmentAPI.Services
     public interface ISslCheckingService
     {
         Task<SslCheckResult> CheckSslAsync(string domain, CancellationToken cancellationToken = default);
+        Task<SslDetailResult> GetSslDetailsAsync(string domain, CancellationToken cancellationToken = default);
     }
 
     public class SslCheckingService : ISslCheckingService
@@ -19,20 +21,23 @@ namespace SecurityAssessmentAPI.Services
         private static readonly TimeSpan SslLabsPollDelay = TimeSpan.FromSeconds(3);
 
         private readonly ISslLabsClient _sslLabsClient;
-        private readonly IHardenizeClient _hardenizeClient;
         private readonly ILogger<SslCheckingService> _logger;
 
         public SslCheckingService(
             ISslLabsClient sslLabsClient,
-            IHardenizeClient hardenizeClient,
             ILogger<SslCheckingService> logger)
         {
             _sslLabsClient = sslLabsClient;
-            _hardenizeClient = hardenizeClient;
             _logger = logger;
         }
 
         public async Task<SslCheckResult> CheckSslAsync(string domain, CancellationToken cancellationToken = default)
+        {
+            var detailResult = await GetSslDetailsAsync(domain, cancellationToken);
+            return ToSummaryResult(detailResult);
+        }
+
+        public async Task<SslDetailResult> GetSslDetailsAsync(string domain, CancellationToken cancellationToken = default)
         {
             _logger.LogInformation("SSL check started: {Domain}", domain);
 
@@ -42,8 +47,7 @@ namespace SecurityAssessmentAPI.Services
 
                 if (IsReadyStatus(sslLabsResponse.Status))
                 {
-                    var result = CalculateScore(sslLabsResponse);
-                    result.Domain = domain;
+                    var result = CreateSslLabsDetailResult(domain, sslLabsResponse);
 
                     _logger.LogInformation(
                         "SSL check completed (SSL Labs): Domain={Domain}, Score={Score}, Status={Status}",
@@ -55,16 +59,16 @@ namespace SecurityAssessmentAPI.Services
                 }
 
                 _logger.LogWarning(
-                    "SSL Labs did not return a successful terminal result: Status={Status}, Domain={Domain}. The Hardenize fallback will be attempted.",
+                    "SSL Labs did not return a successful terminal result: Status={Status}, Domain={Domain}. The direct TLS fallback will be attempted.",
                     sslLabsResponse.Status,
                     domain);
 
-                return await FallbackToHardenizeOrErrorAsync(domain, sslLabsResponse.Status, cancellationToken);
+                return await FallbackToDirectTlsOrErrorAsync(domain, sslLabsResponse.Status, cancellationToken);
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "SSL Labs request failed or was interrupted: {Domain}. Falling back to Hardenize...", domain);
-                return await FallbackToHardenizeOrErrorAsync(domain, "SSL_LABS_UNAVAILABLE", cancellationToken, ex);
+                _logger.LogWarning(ex, "SSL Labs request failed or was interrupted: {Domain}. Falling back to direct TLS probe...", domain);
+                return await FallbackToDirectTlsOrErrorAsync(domain, "SSL_LABS_UNAVAILABLE", cancellationToken, ex);
             }
         }
 
@@ -100,107 +104,7 @@ namespace SecurityAssessmentAPI.Services
             return latestResponse ?? new SslLabsResponse { Host = domain, Status = "ERROR" };
         }
 
-        private async Task<SslCheckResult> FallbackToHardenizeOrErrorAsync(
-            string domain,
-            string? sslLabsStatus,
-            CancellationToken cancellationToken,
-            Exception? originalException = null)
-        {
-            // Hardenize keeps the assessment resilient when SSL Labs is unavailable, even though the dataset is less detailed.
-            var hardenizeResponse = await _hardenizeClient.GetCertificateDiscoveryAsync(domain, cancellationToken);
-            if (hardenizeResponse == null || hardenizeResponse.Records == null || !hardenizeResponse.Records.Any())
-            {
-                _logger.LogWarning("No data was returned from Hardenize: {Domain}", domain);
-
-                if (originalException != null)
-                {
-                    _logger.LogError(originalException, "SSL check error: {Domain}", domain);
-                }
-
-                return await FallbackToDirectTlsOrErrorAsync(domain, sslLabsStatus, cancellationToken, originalException);
-            }
-
-            var record = SelectPrimaryHardenizeRecord(hardenizeResponse.Records, DateTimeOffset.Now);
-            var now = DateTimeOffset.Now;
-            var validFrom = record.valid_from.HasValue ? DateTimeOffset.FromUnixTimeSeconds(record.valid_from.Value) : now;
-            var validTo = record.valid_until.HasValue ? DateTimeOffset.FromUnixTimeSeconds(record.valid_until.Value) : now;
-            var remainingDays = (validTo - now).TotalDays;
-            var totalValidityDays = (validTo - validFrom).TotalDays;
-            var renewalVerified = IsHardenizeRenewalVerified(record, hardenizeResponse.Records, validTo);
-
-            var certificateValidity = validFrom <= now && remainingDays > 0;
-            var tlsScore = 7;
-            var validDaysScore = CalculateRemainingLifetimeScore(validFrom, validTo);
-            var cipherScore = 6;
-
-            var overall = tlsScore + (certificateValidity ? 4 : 0) + validDaysScore + cipherScore;
-            var status = overall >= 25 ? "PASS" : overall >= 15 ? "WARNING" : "FAIL";
-
-            var result = new SslCheckResult
-            {
-                Domain = domain,
-                OverallScore = overall,
-                Status = status,
-                Criteria = new SslCriteria
-                {
-                    TlsVersion = new SslScoreDetail { Score = tlsScore, Details = "Limited TLS data was received from Hardenize." },
-                    CertificateValidity = new SslScoreDetail
-                    {
-                        Score = certificateValidity ? 4 : 0,
-                        Details = certificateValidity ? "The certificate is valid." : "The certificate has expired or is missing."
-                    },
-                    RemainingLifetime = new SslScoreDetail
-                    {
-                        Score = validDaysScore,
-                        Details = GetRemainingLifetimeDetails(validFrom, validTo, remainingDays, totalValidityDays)
-                    },
-                    CipherStrength = new SslScoreDetail { Score = cipherScore, Details = "A default cipher score was used because cipher data was limited." }
-                },
-                Alerts = new List<SslAlert>()
-            };
-
-            if (!certificateValidity)
-            {
-                result.Alerts.Add(new SslAlert { Type = "CRITICAL_ALARM", Message = "The certificate is invalid or expired (Hardenize)." });
-            }
-            else
-            {
-                if (remainingDays < 30 && !renewalVerified)
-                {
-                    result.Alerts.Add(new SslAlert
-                    {
-                        Type = "CRITICAL_WARNING",
-                        Message = "The certificate is approaching expiry and renewal has not been verified (Hardenize).",
-                        ExpiryDate = validTo.DateTime
-                    });
-                }
-
-                if (remainingDays < 7 && !renewalVerified)
-                {
-                    result.Alerts.Add(new SslAlert
-                    {
-                        Type = "CRITICAL_ALARM",
-                        Message = "The certificate will expire very soon and renewal is not verified (Hardenize).",
-                        ExpiryDate = validTo.DateTime
-                    });
-                }
-
-                if (remainingDays < 30 && renewalVerified)
-                {
-                    result.Alerts.Add(new SslAlert
-                    {
-                        Type = "INFO",
-                        Message = "The certificate is close to expiry, but a replacement certificate appears to be provisioned (Hardenize).",
-                        ExpiryDate = validTo.DateTime
-                    });
-                }
-            }
-
-            _logger.LogInformation("SSL check completed (Hardenize): Domain={Domain}, Score={Score}, Status={Status}", domain, result.OverallScore, result.Status);
-            return result;
-        }
-
-        private async Task<SslCheckResult> FallbackToDirectTlsOrErrorAsync(
+        private async Task<SslDetailResult> FallbackToDirectTlsOrErrorAsync(
             string domain,
             string? sslLabsStatus,
             CancellationToken cancellationToken,
@@ -236,6 +140,7 @@ namespace SecurityAssessmentAPI.Services
                 var notAfter = new DateTimeOffset(certificate.NotAfter.ToUniversalTime());
                 var remainingDays = (notAfter - now).TotalDays;
                 var totalValidityDays = (notAfter - notBefore).TotalDays;
+                var remoteIpAddress = (tcpClient.Client.RemoteEndPoint as IPEndPoint)?.Address?.ToString() ?? string.Empty;
 
                 var tlsScore = CalculateTlsScoreFromProtocol(sslStream.SslProtocol);
                 var certificateValidityScore = notBefore <= now && notAfter > now ? 4 : 0;
@@ -245,16 +150,18 @@ namespace SecurityAssessmentAPI.Services
                 var rawOverall = tlsScore + certificateValidityScore + remainingLifetimeScore + cipherScore;
 
                 // Direct TLS probing is useful as a resilience fallback, but it is
-                // lower-confidence than SSL Labs/Hardenize and should not produce
+                // lower-confidence than SSL Labs and should not produce
                 // top-tier scores on its own.
                 var overall = Math.Min(rawOverall, 24);
                 var status = overall >= 15 ? "WARNING" : "FAIL";
 
-                var result = new SslCheckResult
+                var result = new SslDetailResult
                 {
                     Domain = domain,
                     OverallScore = overall,
                     Status = status,
+                    DataSource = "DIRECT_TLS",
+                    DataSourceStatus = sslLabsStatus ?? "UNKNOWN",
                     Criteria = new SslCriteria
                     {
                         TlsVersion = new SslScoreDetail
@@ -278,13 +185,25 @@ namespace SecurityAssessmentAPI.Services
                             Details = $"Direct TLS probe observed cipher strength: {sslStream.CipherStrength} bits."
                         }
                     },
-                    Alerts = new List<SslAlert>()
+                    Alerts = new List<SslAlert>(),
+                    Endpoints = new List<SslEndpointDetail>
+                    {
+                        new SslEndpointDetail
+                        {
+                            IpAddress = remoteIpAddress,
+                            ServerName = domain,
+                            Grade = "UNAVAILABLE"
+                        }
+                    },
+                    Certificate = CreateCertificateDetail(certificate, notBefore, notAfter),
+                    SupportedTlsVersions = new List<string> { sslStream.SslProtocol.ToString() },
+                    NotableCipherSuites = new List<string> { $"{sslStream.CipherAlgorithm} ({sslStream.CipherStrength} bits)" }
                 };
 
                 result.Alerts.Add(new SslAlert
                 {
                     Type = "INFO",
-                    Message = $"The result was produced by a direct TLS probe because SSL Labs (Status={sslLabsStatus ?? "UNKNOWN"}) and Hardenize data were unavailable."
+                    Message = $"The result was produced by a direct TLS probe because SSL Labs was unavailable or did not return a usable result (Status={sslLabsStatus ?? "UNKNOWN"})."
                 });
 
                 if (certificateValidityScore == 0)
@@ -320,6 +239,8 @@ namespace SecurityAssessmentAPI.Services
                     }
                 }
 
+                EnsureAtLeastOneAlert(result);
+
                 _logger.LogInformation("SSL check completed (direct TLS probe): Domain={Domain}, Score={Score}, Status={Status}", domain, result.OverallScore, result.Status);
                 return result;
             }
@@ -329,18 +250,23 @@ namespace SecurityAssessmentAPI.Services
 
                 if (originalException != null)
                 {
-                    _logger.LogError(originalException, "Original SSL Labs/Hardenize failure before direct TLS probe: {Domain}", domain);
+                    _logger.LogError(originalException, "Original SSL Labs failure before direct TLS probe: {Domain}", domain);
                 }
 
                 return CreateErrorResult(
                     domain,
-                    $"SSL Labs did not return a usable result (Status={sslLabsStatus ?? "UNKNOWN"}), Hardenize returned no data, and the direct TLS probe also failed.");
+                    $"SSL Labs did not return a usable result (Status={sslLabsStatus ?? "UNKNOWN"}), and the direct TLS probe also failed.");
             }
         }
 
-        private SslCheckResult CalculateScore(SslLabsResponse response)
+        private SslDetailResult CreateSslLabsDetailResult(string domain, SslLabsResponse response)
         {
-            var result = new SslCheckResult();
+            var result = new SslDetailResult
+            {
+                Domain = domain,
+                DataSource = "SSL_LABS",
+                DataSourceStatus = response.Status
+            };
             var cert = response.Certs.FirstOrDefault();
 
             if (!response.Endpoints.Any())
@@ -377,6 +303,13 @@ namespace SecurityAssessmentAPI.Services
                 .SelectMany(group => group.List ?? Enumerable.Empty<SslLabsSuite>())
                 .ToList();
 
+            result.Endpoints = response.Endpoints.Select(endpoint => new SslEndpointDetail
+            {
+                IpAddress = endpoint.IpAddress,
+                ServerName = endpoint.ServerName,
+                Grade = string.IsNullOrWhiteSpace(endpoint.Grade) ? "UNAVAILABLE" : endpoint.Grade
+            }).ToList();
+
             result.Criteria.TlsVersion.Score = CalculateTlsScore(protocols);
             result.Criteria.CertificateValidity.Score = IsCertificateValid(cert) ? 4 : 0;
             result.Criteria.RemainingLifetime.Score = CalculateRemainingLifetimeScore(cert);
@@ -394,6 +327,9 @@ namespace SecurityAssessmentAPI.Services
             result.Criteria.CertificateValidity.Details = IsCertificateValid(cert) ? "Valid" : "Invalid";
             result.Criteria.RemainingLifetime.Details = GetRemainingLifetimeDetails(cert);
             result.Criteria.CipherStrength.Details = GetCipherDetails(suites);
+            result.Certificate = CreateCertificateDetail(cert);
+            result.SupportedTlsVersions = GetSupportedTlsVersions(protocols);
+            result.NotableCipherSuites = GetNotableCipherSuites(suites);
 
             AddAlerts(result, cert, response.Certs);
 
@@ -405,6 +341,8 @@ namespace SecurityAssessmentAPI.Services
                     Message = "HTTPS protocol details were limited; the score was calculated from the available TLS data."
                 });
             }
+
+            EnsureAtLeastOneAlert(result);
 
             return result;
         }
@@ -448,9 +386,7 @@ namespace SecurityAssessmentAPI.Services
                 return "No TLS protocol information was found.";
             }
 
-            var versions = protocols
-                .Select(p => string.IsNullOrWhiteSpace(p.Name) ? p.Version : $"{p.Name} {p.Version}")
-                .Distinct();
+            var versions = GetSupportedTlsVersions(protocols);
 
             return $"Supported TLS versions: {string.Join(", ", versions)}";
         }
@@ -487,16 +423,21 @@ namespace SecurityAssessmentAPI.Services
                 return "No cipher suite information was found.";
             }
 
-            var strongCiphers = suites
-                .Where(s => s.Name.Contains("AES", StringComparison.OrdinalIgnoreCase) ||
-                            s.Name.Contains("CHACHA", StringComparison.OrdinalIgnoreCase))
-                .Take(3)
-                .Select(s => s.Name);
+            var strongestCipher = suites
+                .Where(s => !string.IsNullOrWhiteSpace(s.Name))
+                .OrderByDescending(s => s.CipherStrength)
+                .ThenBy(s => s.Name, StringComparer.OrdinalIgnoreCase)
+                .FirstOrDefault();
 
-            return $"Strong ciphers: {string.Join(", ", strongCiphers)}";
+            if (strongestCipher == null)
+            {
+                return "Cipher suites were observed, but no notable cipher summary could be produced.";
+            }
+
+            return $"Strongest observed cipher: {strongestCipher.Name} ({strongestCipher.CipherStrength} bits). See notableCipherSuites for more.";
         }
 
-        private void AddAlerts(SslCheckResult result, SslLabsCert cert, List<SslLabsCert> allCerts)
+        private void AddAlerts(SslDetailResult result, SslLabsCert cert, List<SslLabsCert> allCerts)
         {
             var remainingDays = (DateTimeOffset.FromUnixTimeMilliseconds(cert.NotAfter) - DateTimeOffset.Now).TotalDays;
             var renewalVerified = IsSslLabsRenewalVerified(cert, allCerts);
@@ -530,45 +471,6 @@ namespace SecurityAssessmentAPI.Services
                     ExpiryDate = DateTimeOffset.FromUnixTimeMilliseconds(cert.NotAfter).DateTime
                 });
             }
-        }
-
-        private static HardenizeCertificateRecord SelectPrimaryHardenizeRecord(List<HardenizeCertificateRecord> records, DateTimeOffset now)
-        {
-            var active = records
-                .Where(record => record.valid_from.HasValue && record.valid_until.HasValue)
-                .Where(record => DateTimeOffset.FromUnixTimeSeconds(record.valid_from!.Value) <= now &&
-                                 DateTimeOffset.FromUnixTimeSeconds(record.valid_until!.Value) > now)
-                .OrderBy(record => record.valid_until)
-                .FirstOrDefault();
-
-            if (active != null)
-            {
-                return active;
-            }
-
-            return records
-                .Where(record => record.valid_from.HasValue && record.valid_until.HasValue)
-                .OrderByDescending(record => record.valid_until)
-                .First();
-        }
-
-        private static bool IsHardenizeRenewalVerified(HardenizeCertificateRecord current, List<HardenizeCertificateRecord> records, DateTimeOffset currentNotAfter)
-        {
-            var replacementWindowEnd = currentNotAfter.AddDays(14);
-            var currentSubject = current.subject ?? string.Empty;
-
-            return records
-                .Where(record => record.valid_from.HasValue && record.valid_until.HasValue)
-                .Select(record => new
-                {
-                    ValidFrom = DateTimeOffset.FromUnixTimeSeconds(record.valid_from!.Value),
-                    ValidUntil = DateTimeOffset.FromUnixTimeSeconds(record.valid_until!.Value),
-                    Subject = record.subject ?? string.Empty
-                })
-                .Any(candidate =>
-                    candidate.ValidUntil > currentNotAfter &&
-                    candidate.ValidFrom <= replacementWindowEnd &&
-                    SubjectLooksRelated(currentSubject, candidate.Subject));
         }
 
         private static bool IsSslLabsRenewalVerified(SslLabsCert current, List<SslLabsCert> allCerts)
@@ -633,12 +535,13 @@ namespace SecurityAssessmentAPI.Services
             string.Equals(status, "ERROR", StringComparison.OrdinalIgnoreCase) ||
             string.Equals(status, "DNS", StringComparison.OrdinalIgnoreCase);
 
-        private static SslCheckResult CreateErrorResult(string domain, string message)
+        private static SslDetailResult CreateErrorResult(string domain, string message)
         {
-            return new SslCheckResult
+            return new SslDetailResult
             {
                 Domain = domain,
                 Status = "ERROR",
+                DataSource = "ERROR",
                 Alerts = new List<SslAlert>
                 {
                     new SslAlert
@@ -646,8 +549,113 @@ namespace SecurityAssessmentAPI.Services
                         Type = "CRITICAL_ALARM",
                         Message = message
                     }
+                },
+                Endpoints = new List<SslEndpointDetail>
+                {
+                    new SslEndpointDetail
+                    {
+                        ServerName = domain,
+                        Grade = "UNAVAILABLE"
+                    }
                 }
             };
+        }
+
+        private static SslCheckResult ToSummaryResult(SslDetailResult detailResult)
+        {
+            return new SslCheckResult
+            {
+                Domain = detailResult.Domain,
+                OverallScore = detailResult.OverallScore,
+                MaxScore = detailResult.MaxScore,
+                Status = detailResult.Status,
+                Criteria = detailResult.Criteria,
+                Alerts = detailResult.Alerts
+            };
+        }
+
+        private static SslCertificateDetail CreateCertificateDetail(SslLabsCert cert)
+        {
+            var validFrom = DateTimeOffset.FromUnixTimeMilliseconds(cert.NotBefore);
+            var validUntil = DateTimeOffset.FromUnixTimeMilliseconds(cert.NotAfter);
+
+            return new SslCertificateDetail
+            {
+                Subject = cert.Subject,
+                Issuer = cert.IssuerSubject,
+                ValidFrom = validFrom,
+                ValidUntil = validUntil,
+                DaysRemaining = CalculateDaysRemaining(validUntil),
+                CommonNames = cert.CommonNames,
+                AltNames = cert.AltNames
+            };
+        }
+
+        private static SslCertificateDetail CreateCertificateDetail(X509Certificate2 certificate, DateTimeOffset notBefore, DateTimeOffset notAfter)
+        {
+            return new SslCertificateDetail
+            {
+                Subject = certificate.Subject,
+                Issuer = certificate.Issuer,
+                ValidFrom = notBefore,
+                ValidUntil = notAfter,
+                DaysRemaining = CalculateDaysRemaining(notAfter)
+            };
+        }
+
+        private static List<string> GetSupportedTlsVersions(List<SslLabsProtocol> protocols)
+        {
+            return protocols
+                .Select(protocol => string.IsNullOrWhiteSpace(protocol.Name) ? protocol.Version : $"{protocol.Name} {protocol.Version}")
+                .Where(value => !string.IsNullOrWhiteSpace(value))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .OrderByDescending(GetTlsVersionSortKey)
+                .ThenByDescending(value => value, StringComparer.OrdinalIgnoreCase)
+                .ToList();
+        }
+
+        private static List<string> GetNotableCipherSuites(List<SslLabsSuite> suites)
+        {
+            return suites
+                .Where(suite => !string.IsNullOrWhiteSpace(suite.Name))
+                .OrderByDescending(suite => suite.CipherStrength)
+                .ThenBy(suite => suite.Name, StringComparer.OrdinalIgnoreCase)
+                .Select(suite => $"{suite.Name} ({suite.CipherStrength} bits)")
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .Take(5)
+                .ToList();
+        }
+
+        private static int CalculateDaysRemaining(DateTimeOffset validUntil)
+        {
+            var remainingDays = (validUntil - DateTimeOffset.UtcNow).TotalDays;
+            return remainingDays >= 0
+                ? (int)Math.Ceiling(remainingDays)
+                : (int)Math.Floor(remainingDays);
+        }
+
+        private static double GetTlsVersionSortKey(string value)
+        {
+            var parts = value.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            var versionText = parts.Length == 0 ? value : parts[^1];
+
+            return double.TryParse(versionText, System.Globalization.NumberStyles.AllowDecimalPoint, System.Globalization.CultureInfo.InvariantCulture, out var parsed)
+                ? parsed
+                : double.MinValue;
+        }
+
+        private static void EnsureAtLeastOneAlert(SslDetailResult result)
+        {
+            if (result.Alerts.Count > 0)
+            {
+                return;
+            }
+
+            result.Alerts.Add(new SslAlert
+            {
+                Type = "INFO",
+                Message = "No important SSL/TLS alerts were detected."
+            });
         }
 
         private static int CalculateRemainingLifetimeScore(DateTimeOffset notBefore, DateTimeOffset notAfter)

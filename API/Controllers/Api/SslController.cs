@@ -71,5 +71,32 @@ namespace SecurityAssessmentAPI.Controllers.Api
                 return StatusCode(500, new { message = "SSL check could not be performed", error = ex.Message });
             }
         }
+
+        [HttpGet("details/{domain}")]
+        public async Task<IActionResult> GetSslDetails(string domain, CancellationToken cancellationToken)
+        {
+            if (string.IsNullOrWhiteSpace(domain))
+            {
+                _logger.LogWarning("Invalid SSL details domain parameter: {Domain}", domain);
+                return BadRequest("Domain is required");
+            }
+
+            try
+            {
+                _logger.LogInformation("SSL details GET request received: {Domain}", domain);
+
+                var result = await _sslCheckingService.GetSslDetailsAsync(domain, cancellationToken);
+
+                _logger.LogInformation("SSL details GET response sent: Domain={Domain}, Status={Status}, Score={Score}, Source={Source}",
+                    result.Domain, result.Status, result.OverallScore, result.DataSource);
+
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error during SSL details GET: {Domain}", domain);
+                return StatusCode(500, new { message = "SSL details could not be performed", error = ex.Message });
+            }
+        }
     }
 }
