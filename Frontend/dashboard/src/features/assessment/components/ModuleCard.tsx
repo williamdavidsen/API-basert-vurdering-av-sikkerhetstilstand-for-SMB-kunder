@@ -39,7 +39,7 @@ function moduleStatusProps(status: string): { label: string; color: 'success.dar
   if (u === 'PASS') return { label: 'PASS', color: 'success.dark' }
   if (u === 'WARNING') return { label: 'WARNING', color: 'warning.dark' }
   if (u === 'FAIL') return { label: 'FAIL', color: 'error.dark' }
-  if (u === 'ERROR') return { label: 'ERROR', color: 'warning.dark' }
+  if (u === 'ERROR') return { label: 'ERROR', color: 'error.dark' }
   return { label: status || '—', color: 'text.secondary' }
 }
 

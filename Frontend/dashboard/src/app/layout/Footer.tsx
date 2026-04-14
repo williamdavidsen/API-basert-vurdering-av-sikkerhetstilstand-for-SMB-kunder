@@ -20,7 +20,7 @@ export function Footer() {
         align="center"
         sx={{ display: 'block', color: 'text.secondary', mt: 0.35 }}
       >
-        Norway · {new Date().getFullYear()}
+        OSLO-2026
       </Typography>
     </Box>
   )

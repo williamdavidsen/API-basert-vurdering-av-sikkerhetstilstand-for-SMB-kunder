@@ -5,6 +5,7 @@ import type {
   EmailCheckResult,
   HeadersCheckResult,
   ReputationCheckResult,
+  SslDetailResult,
   SslCheckResult,
 } from '../model/assessment.types'
 
@@ -46,8 +47,16 @@ export async function fetchAssessmentDashboardBundle(
   return { assessment, ssl, headers, email, reputation }
 }
 
+export async function fetchAssessmentCheck(domain: string, signal?: AbortSignal): Promise<AssessmentCheckResult> {
+  return fetchJson<AssessmentCheckResult>(apiUrl(`/api/assessment/check/${encodeDomain(domain)}`), { signal })
+}
+
 export async function fetchSslCheck(domain: string, signal?: AbortSignal): Promise<SslCheckResult> {
   return fetchJson<SslCheckResult>(apiUrl(`/api/ssl/check/${encodeDomain(domain)}`), { signal })
+}
+
+export async function fetchSslDetails(domain: string, signal?: AbortSignal): Promise<SslDetailResult> {
+  return fetchJson<SslDetailResult>(apiUrl(`/api/ssl/details/${encodeDomain(domain)}`), { signal })
 }
 
 export async function fetchHeadersCheck(domain: string, signal?: AbortSignal): Promise<HeadersCheckResult> {

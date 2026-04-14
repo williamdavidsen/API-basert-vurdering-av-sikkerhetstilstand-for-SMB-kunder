@@ -181,6 +181,7 @@ export function SecurityDashboardPage() {
           score={data.assessment.overallScore}
           maxScore={data.assessment.maxScore}
           uiStatus={uiStatus}
+          modules={data.assessment.modules}
           onTestAnother={() => navigate(routes.home)}
           extraActions={
             <Button variant="text" color="secondary" onClick={handleOpenPqcManual} sx={{ fontWeight: 800 }}>

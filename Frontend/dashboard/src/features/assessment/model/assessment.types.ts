@@ -80,6 +80,31 @@ export type SslCheckResult = {
   alerts: SslAlert[]
 }
 
+export type SslEndpointDetail = {
+  ipAddress: string
+  serverName: string
+  grade: string
+}
+
+export type SslCertificateDetail = {
+  subject: string
+  issuer: string
+  validFrom?: string | null
+  validUntil?: string | null
+  daysRemaining?: number | null
+  commonNames: string[]
+  altNames: string[]
+}
+
+export type SslDetailResult = SslCheckResult & {
+  dataSource: string
+  dataSourceStatus: string
+  endpoints: SslEndpointDetail[]
+  certificate: SslCertificateDetail
+  supportedTlsVersions: string[]
+  notableCipherSuites: string[]
+}
+
 export type HeaderScoreDetail = {
   score: number
   details: string
