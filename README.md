@@ -32,6 +32,7 @@ The API exposes dedicated endpoints for each module and one combined assessment 
 - `API/DTOs` contains request and response models
 - `API/DAL` contains data access and repository code
 - `Test/AssessmentBatchRunner` contains a small batch runner for testing many domains
+- `Frontend/dashboard` contains the optional dashboard UI (React, TypeScript, Vite, Material UI)
 
 ## Running the project
 
@@ -53,6 +54,8 @@ OpenAPI JSON:
 ```text
 http://localhost:5555/swagger/v1/swagger.json
 ```
+
+With the API running, open `Frontend/dashboard`, run `npm install` once, then `npm run dev` (typically `http://localhost:5173`). Vite proxies `/api` to your backend in dev; override the target with `VITE_DEV_API_PROXY` in `Frontend/dashboard/.env.development` if needed.
 
 ## Notes
 
