@@ -410,10 +410,11 @@ namespace SecurityAssessmentAPI.Services
 
             if (!IsShortLivedCertificate(totalValidityDays))
             {
-                return $"Long-lived certificate detected ({totalValidityDays:F0} days total lifetime). Short-lived lifetime scoring does not apply.";
+                return $"Long-lived certificate: {remainingDays:F0} days remaining. Long-lived lifetime scoring is based on remaining days.";
             }
 
-            return $"Short-lived certificate: {remainingDays:F0} days remaining out of {totalValidityDays:F0} days total lifetime.";
+            var remainingPercentage = remainingDays <= 0 ? 0 : (remainingDays / totalValidityDays) * 100;
+            return $"Short-lived certificate: {remainingPercentage:F0}% remaining ({remainingDays:F0} days out of {totalValidityDays:F0} days total lifetime).";
         }
 
         private string GetCipherDetails(List<SslLabsSuite> suites)
@@ -667,17 +668,18 @@ namespace SecurityAssessmentAPI.Services
                 return 0;
             }
 
-            // Report alignment: remaining lifetime scoring applies only to short-lived certificates.
             if (!IsShortLivedCertificate(totalDays))
             {
-                return 6;
+                if (remainingDays >= 30) return 6;
+                if (remainingDays >= 1) return 3;
+                return 0;
             }
 
             var percentage = (remainingDays / totalDays) * 100;
 
-            if (percentage > 90) return 6;
-            if (percentage > 50) return 4;
-            if (percentage > 10) return 2;
+            if (percentage >= 50) return 6;
+            if (percentage >= 30) return 4;
+            if (percentage >= 1) return 2;
             return 0;
         }
 
