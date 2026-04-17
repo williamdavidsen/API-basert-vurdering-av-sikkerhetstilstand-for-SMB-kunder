@@ -590,7 +590,7 @@ function describeCertificateType(validFrom?: string | null, validUntil?: string 
   if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return 'Not provided by API'
 
   const lifetimeDays = (end.getTime() - start.getTime()) / 86_400_000
-  return lifetimeDays <= 120 ? 'Short-term' : 'Long-term'
+  return lifetimeDays <= 7 ? 'Short-term' : 'Long-term'
 }
 
 function cipherStrengthLabel(cipher: string): string {

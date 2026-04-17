@@ -18,7 +18,7 @@ namespace SecurityAssessmentAPI.Services
     public class SslCheckingService : ISslCheckingService
     {
         private const int SslLabsMaxAttempts = 8;
-        private const int ShortLivedCertificateMaxDays = 120;
+        private const int ShortLivedCertificateMaxDays = 7;
         private static readonly TimeSpan SslLabsPollDelay = TimeSpan.FromSeconds(3);
 
         private readonly ISslLabsClient _sslLabsClient;
