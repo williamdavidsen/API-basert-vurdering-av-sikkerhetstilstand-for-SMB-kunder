@@ -84,6 +84,10 @@ namespace SecurityAssessmentAPI.Services
                         NotAfter = GetInt64(certElement, "notAfter"),
                         IssuerSubject = GetString(certElement, "issuerSubject") ?? string.Empty,
                         Subject = GetString(certElement, "subject") ?? string.Empty,
+                        Sha256Hash = GetString(certElement, "sha256Hash") ?? string.Empty,
+                        SignatureAlgorithm = GetString(certElement, "sigAlg") ?? string.Empty,
+                        KeyAlgorithm = GetString(certElement, "keyAlg") ?? string.Empty,
+                        KeySize = GetNullableInt32(certElement, "keySize"),
                         CommonNames = GetStringArray(certElement, "commonNames"),
                         AltNames = GetStringArray(certElement, "altNames")
                     });

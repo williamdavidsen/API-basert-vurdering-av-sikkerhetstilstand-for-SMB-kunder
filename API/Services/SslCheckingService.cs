@@ -4,6 +4,7 @@ using System.Net;
 using System.Net.Security;
 using System.Net.Sockets;
 using System.Security.Authentication;
+using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 
 namespace SecurityAssessmentAPI.Services
@@ -584,6 +585,9 @@ namespace SecurityAssessmentAPI.Services
             {
                 Subject = cert.Subject,
                 Issuer = cert.IssuerSubject,
+                FingerprintSha256 = cert.Sha256Hash,
+                SignatureAlgorithm = cert.SignatureAlgorithm,
+                Key = FormatCertificateKey(cert.KeyAlgorithm, cert.KeySize),
                 ValidFrom = validFrom,
                 ValidUntil = validUntil,
                 DaysRemaining = CalculateDaysRemaining(validUntil),
@@ -598,10 +602,47 @@ namespace SecurityAssessmentAPI.Services
             {
                 Subject = certificate.Subject,
                 Issuer = certificate.Issuer,
+                FingerprintSha256 = Convert.ToHexString(SHA256.HashData(certificate.RawData)).ToLowerInvariant(),
+                SignatureAlgorithm = certificate.SignatureAlgorithm.FriendlyName ?? certificate.SignatureAlgorithm.Value ?? string.Empty,
+                Key = GetCertificateKey(certificate),
                 ValidFrom = notBefore,
                 ValidUntil = notAfter,
                 DaysRemaining = CalculateDaysRemaining(notAfter)
             };
+        }
+
+        private static string FormatCertificateKey(string keyAlgorithm, int? keySize)
+        {
+            var algorithm = string.IsNullOrWhiteSpace(keyAlgorithm) ? string.Empty : keyAlgorithm.Trim();
+            if (keySize is > 0)
+            {
+                return string.IsNullOrWhiteSpace(algorithm)
+                    ? $"{keySize} bits"
+                    : $"{algorithm} {keySize} bits";
+            }
+
+            return algorithm;
+        }
+
+        private static string GetCertificateKey(X509Certificate2 certificate)
+        {
+            using var rsa = certificate.GetRSAPublicKey();
+            if (rsa != null)
+            {
+                return $"RSA {rsa.KeySize} bits";
+            }
+
+            using var ecdsa = certificate.GetECDsaPublicKey();
+            if (ecdsa != null)
+            {
+                return $"EC {ecdsa.KeySize} bits";
+            }
+
+            var friendlyName = certificate.PublicKey.Oid.FriendlyName ?? certificate.PublicKey.Oid.Value ?? string.Empty;
+            var keyLength = certificate.PublicKey.EncodedKeyValue.RawData.Length * 8;
+            return keyLength > 0 && !string.IsNullOrWhiteSpace(friendlyName)
+                ? $"{friendlyName} {keyLength} bits"
+                : friendlyName;
         }
 
         private static List<string> GetSupportedTlsVersions(List<SslLabsProtocol> protocols)

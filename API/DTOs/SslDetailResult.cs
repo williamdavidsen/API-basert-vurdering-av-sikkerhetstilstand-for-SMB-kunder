@@ -27,6 +27,9 @@ namespace SecurityAssessmentAPI.DTOs
     {
         public string Subject { get; set; } = string.Empty;
         public string Issuer { get; set; } = string.Empty;
+        public string FingerprintSha256 { get; set; } = string.Empty;
+        public string SignatureAlgorithm { get; set; } = string.Empty;
+        public string Key { get; set; } = string.Empty;
         public DateTimeOffset? ValidFrom { get; set; }
         public DateTimeOffset? ValidUntil { get; set; }
         public int? DaysRemaining { get; set; }

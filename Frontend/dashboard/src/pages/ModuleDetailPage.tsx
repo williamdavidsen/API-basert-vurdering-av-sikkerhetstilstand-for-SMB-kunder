@@ -55,6 +55,21 @@ type Narrative = {
   evidence: string[]
 }
 
+type ReadMoreField = {
+  pdfSubject: string
+  value: string
+}
+
+type ReadMoreSection = {
+  title: string
+  fields: ReadMoreField[]
+}
+
+type SslReadMoreOutput = {
+  domainOverview: ReadMoreField[]
+  criteria: ReadMoreSection[]
+}
+
 const moduleTabs: Array<{ key: DashboardModuleKey; label: string }> = [
   { key: 'ssl-tls', label: 'TLS / SSL' },
   { key: 'http-headers', label: 'HTTP Headers' },
@@ -349,25 +364,114 @@ export function ModuleDetailPage() {
             <BulletList items={narrative.summary} />
           </SectionCard>
 
-          <SectionCard title="Recommendation from scan">
-            <Typography variant="body1" sx={{ color: 'text.primary' }}>
-              {narrative.recommendation}
-            </Typography>
-            <Typography variant="body2" sx={{ mt: 1, color: 'text.secondary' }}>
-              This recommendation reflects the latest module data and is prioritized for practical impact.
-            </Typography>
-          </SectionCard>
+          {safeModuleKey === 'ssl-tls' ? (
+            <SslReadMoreSection
+              output={buildSslReadMoreOutput(
+                domain,
+                state.data.modulePayload as SslCheckResult,
+                state.data.sslDetails,
+                state.data.loadedAtIso,
+              )}
+              isExtendedDataReady={Boolean(state.data.sslDetails)}
+            />
+          ) : null}
 
-          <SectionCard title="Hardening checklist">
-            <BulletList items={narrative.checklist} />
-          </SectionCard>
+          {safeModuleKey !== 'ssl-tls' ? (
+            <>
+              <SectionCard title="Recommendation from scan">
+                <Typography variant="body1" sx={{ color: 'text.primary' }}>
+                  {narrative.recommendation}
+                </Typography>
+                <Typography variant="body2" sx={{ mt: 1, color: 'text.secondary' }}>
+                  This recommendation reflects the latest module data and is prioritized for practical impact.
+                </Typography>
+              </SectionCard>
 
-          <SectionCard title="Evidence from endpoint data">
-            <BulletList items={narrative.evidence} />
-          </SectionCard>
+              <SectionCard title="Hardening checklist">
+                <BulletList items={narrative.checklist} />
+              </SectionCard>
+
+              <SectionCard title="Evidence from endpoint data">
+                <BulletList items={narrative.evidence} />
+              </SectionCard>
+            </>
+          ) : null}
         </Stack>
       </Stack>
     </Box>
+  )
+}
+
+function SslReadMoreSection({
+  output,
+  isExtendedDataReady,
+}: {
+  output: SslReadMoreOutput
+  isExtendedDataReady: boolean
+}) {
+  return (
+    <Stack spacing={2}>
+      {!isExtendedDataReady ? (
+        <Alert severity="info">
+          Extended SSL endpoint data is still loading. The page will fill in certificate and cipher details when the
+          API response arrives.
+        </Alert>
+      ) : null}
+
+      <SectionCard title="Domain overview">
+        <KeyValueRows rows={output.domainOverview} />
+      </SectionCard>
+
+      {output.criteria.map((section) => (
+        <SectionCard key={section.title} title={section.title}>
+          <KeyValueRows rows={section.fields} />
+        </SectionCard>
+      ))}
+    </Stack>
+  )
+}
+
+function KeyValueRows({ rows }: { rows: ReadMoreField[] }) {
+  return (
+    <Stack spacing={0.75}>
+      {rows.map((row) => (
+        <Box
+          key={row.pdfSubject}
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', sm: 'minmax(0, 1fr) minmax(120px, 0.32fr)' },
+            gap: { xs: 0.25, sm: 2 },
+            py: 0.85,
+            borderBottom: '1px solid',
+            borderColor: 'divider',
+          }}
+        >
+          <Typography
+            variant="body2"
+            sx={{
+              color: 'text.secondary',
+              fontWeight: 700,
+              minWidth: 0,
+              overflowWrap: 'anywhere',
+              wordBreak: 'break-word',
+            }}
+          >
+            {row.pdfSubject}
+          </Typography>
+          <Typography
+            variant="body2"
+            sx={{
+              color: 'text.primary',
+              minWidth: 0,
+              overflowWrap: 'anywhere',
+              wordBreak: 'break-word',
+            }}
+          >
+            {row.value}
+          </Typography>
+        </Box>
+      ))}
+    </Stack>
   )
 }
 
@@ -410,6 +514,144 @@ function formatDateTime(value: string): string {
     dateStyle: 'medium',
     timeStyle: 'short',
   }).format(parsed)
+}
+
+function formatReadMoreDate(value?: string | null): string {
+  if (!value) return 'Not provided by API'
+
+  const parsed = new Date(value)
+  if (Number.isNaN(parsed.getTime())) return value
+
+  return new Intl.DateTimeFormat('en-GB', {
+    weekday: 'short',
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  }).format(parsed)
+}
+
+function fallback(value: string | undefined | null): string {
+  const clean = value?.trim()
+  return clean ? clean : 'Not provided by API'
+}
+
+function certificateCommonName(sslDetails?: SslDetailResult): string {
+  const commonName = sslDetails?.certificate?.commonNames?.[0]
+  if (commonName) return commonName
+
+  const subject = sslDetails?.certificate?.subject ?? ''
+  const match = subject.match(/(?:^|,\s*)CN\s*=\s*([^,]+)/i)
+  return fallback(match?.[1])
+}
+
+function hasTlsVersion(sslDetails: SslDetailResult | undefined, version: string, summaryDetails: string): string {
+  const source = [
+    ...(sslDetails?.supportedTlsVersions ?? []),
+    summaryDetails,
+  ].join(' ')
+
+  return source.toLowerCase().includes(version.toLowerCase()) ? 'Yes' : 'No'
+}
+
+function describeRemainingValidity(daysRemaining?: number | null): string {
+  if (daysRemaining == null) return 'Not provided by API'
+  if (daysRemaining < 0) return 'Expired'
+  if (daysRemaining < 45) return `~${daysRemaining} days remaining`
+
+  const months = Math.max(1, Math.round(daysRemaining / 30))
+  return `~${months} months remaining`
+}
+
+function describeCertificateType(validFrom?: string | null, validUntil?: string | null): string {
+  if (!validFrom || !validUntil) return 'Not provided by API'
+
+  const start = new Date(validFrom)
+  const end = new Date(validUntil)
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return 'Not provided by API'
+
+  const lifetimeDays = (end.getTime() - start.getTime()) / 86_400_000
+  return lifetimeDays <= 120 ? 'Short-term' : 'Long-term'
+}
+
+function cipherStrengthLabel(cipher: string): string {
+  const upper = cipher.toUpperCase()
+  if (upper.includes('RC4') || upper.includes('3DES') || upper.includes('NULL') || upper.includes('MD5')) {
+    return 'WEAK'
+  }
+
+  if (upper.includes('_CBC_')) {
+    return 'WEAK'
+  }
+
+  if (upper.includes('AES') || upper.includes('CHACHA20')) {
+    return 'Strong'
+  }
+
+  return 'Observed'
+}
+
+function buildSslReadMoreOutput(
+  domain: string,
+  data: SslCheckResult,
+  sslDetails: SslDetailResult | undefined,
+  loadedAtIso: string,
+): SslReadMoreOutput {
+  const certificate = sslDetails?.certificate
+  const endpoint = sslDetails?.endpoints?.[0]
+  const ciphers = sslDetails?.notableCipherSuites?.length
+    ? sslDetails.notableCipherSuites
+    : data.criteria.cipherStrength.details
+      ? [data.criteria.cipherStrength.details]
+      : []
+
+  const cipherFields = ciphers.map((cipher) => ({
+    pdfSubject: cipher.replace(/\s*\(\d+\s*bits\)\s*$/i, ''),
+    value: cipherStrengthLabel(cipher),
+  }))
+
+  return {
+    domainOverview: [
+      { pdfSubject: 'Domain', value: domain },
+      { pdfSubject: 'Server IP', value: fallback(endpoint?.ipAddress) },
+      { pdfSubject: 'Common Name', value: certificateCommonName(sslDetails) },
+      { pdfSubject: 'Fingerprint SHA256', value: fallback(certificate?.fingerprintSha256) },
+      { pdfSubject: 'Signature Algorithm', value: fallback(certificate?.signatureAlgorithm) },
+      { pdfSubject: 'Key', value: fallback(certificate?.key) },
+      { pdfSubject: 'Issuer', value: fallback(certificate?.issuer) },
+      { pdfSubject: 'Certificate valid from', value: formatReadMoreDate(certificate?.validFrom) },
+      { pdfSubject: 'Certificate valid until', value: formatReadMoreDate(certificate?.validUntil) },
+      { pdfSubject: 'Test date', value: formatReadMoreDate(loadedAtIso) },
+    ],
+    criteria: [
+      {
+        title: 'TLS-versjon',
+        fields: [
+          { pdfSubject: 'TLS 1.3', value: hasTlsVersion(sslDetails, 'TLS 1.3', data.criteria.tlsVersion.details) },
+          { pdfSubject: 'TLS 1.2', value: hasTlsVersion(sslDetails, 'TLS 1.2', data.criteria.tlsVersion.details) },
+          { pdfSubject: 'TLS 1.1', value: hasTlsVersion(sslDetails, 'TLS 1.1', data.criteria.tlsVersion.details) },
+          { pdfSubject: 'TLS 1.0', value: hasTlsVersion(sslDetails, 'TLS 1.0', data.criteria.tlsVersion.details) },
+        ],
+      },
+      {
+        title: 'Sertifikatgyldighet',
+        fields: [
+          { pdfSubject: 'Valid from', value: formatReadMoreDate(certificate?.validFrom) },
+          { pdfSubject: 'Valid until', value: formatReadMoreDate(certificate?.validUntil) },
+          { pdfSubject: 'Remaining validity', value: describeRemainingValidity(certificate?.daysRemaining) },
+          { pdfSubject: 'Certificate Type', value: describeCertificateType(certificate?.validFrom, certificate?.validUntil) },
+        ],
+      },
+      {
+        title: 'Krypteringsstyrke (Cipher Strength)',
+        fields: [
+          ...cipherFields,
+          { pdfSubject: 'Forward Secrecy', value: ciphers.some((cipher) => cipher.toUpperCase().includes('ECDHE')) ? 'Yes' : 'Not provided by API' },
+          { pdfSubject: 'Key Size', value: fallback(certificate?.key) },
+          { pdfSubject: 'Signature Algorithm', value: fallback(certificate?.signatureAlgorithm) },
+        ],
+      },
+    ],
+  }
 }
 
 function buildNarrative(moduleKey: DashboardModuleKey, payload: ModulePayload, sslDetails?: SslDetailResult): Narrative {

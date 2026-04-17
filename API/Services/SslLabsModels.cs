@@ -37,6 +37,10 @@ namespace SecurityAssessmentAPI.Services
         public long NotAfter { get; set; }
         public string IssuerSubject { get; set; } = string.Empty;
         public string Subject { get; set; } = string.Empty;
+        public string Sha256Hash { get; set; } = string.Empty;
+        public string SignatureAlgorithm { get; set; } = string.Empty;
+        public string KeyAlgorithm { get; set; } = string.Empty;
+        public int? KeySize { get; set; }
         public List<string> CommonNames { get; set; } = new();
         public List<string> AltNames { get; set; } = new();
     }

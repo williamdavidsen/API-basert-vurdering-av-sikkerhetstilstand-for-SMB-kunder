@@ -89,6 +89,9 @@ export type SslEndpointDetail = {
 export type SslCertificateDetail = {
   subject: string
   issuer: string
+  fingerprintSha256: string
+  signatureAlgorithm: string
+  key: string
   validFrom?: string | null
   validUntil?: string | null
   daysRemaining?: number | null
