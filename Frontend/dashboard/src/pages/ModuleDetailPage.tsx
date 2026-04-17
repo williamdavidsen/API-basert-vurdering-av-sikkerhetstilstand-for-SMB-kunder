@@ -65,8 +65,9 @@ type ReadMoreSection = {
   fields: ReadMoreField[]
 }
 
-type SslReadMoreOutput = {
-  domainOverview: ReadMoreField[]
+type ReadMoreOutput = {
+  overviewTitle?: string
+  overview?: ReadMoreField[]
   criteria: ReadMoreSection[]
 }
 
@@ -365,36 +366,32 @@ export function ModuleDetailPage() {
           </SectionCard>
 
           {safeModuleKey === 'ssl-tls' ? (
-            <SslReadMoreSection
+            <ReadMoreDetailCards
               output={buildSslReadMoreOutput(
                 domain,
                 state.data.modulePayload as SslCheckResult,
                 state.data.sslDetails,
-                state.data.loadedAtIso,
               )}
               isExtendedDataReady={Boolean(state.data.sslDetails)}
             />
           ) : null}
 
-          {safeModuleKey !== 'ssl-tls' ? (
-            <>
-              <SectionCard title="Recommendation from scan">
-                <Typography variant="body1" sx={{ color: 'text.primary' }}>
-                  {narrative.recommendation}
-                </Typography>
-                <Typography variant="body2" sx={{ mt: 1, color: 'text.secondary' }}>
-                  This recommendation reflects the latest module data and is prioritized for practical impact.
-                </Typography>
-              </SectionCard>
+          {safeModuleKey === 'email' ? (
+            <ReadMoreDetailCards
+              output={buildEmailReadMoreOutput(state.data.modulePayload as EmailCheckResult)}
+            />
+          ) : null}
 
-              <SectionCard title="Hardening checklist">
-                <BulletList items={narrative.checklist} />
-              </SectionCard>
+          {safeModuleKey === 'reputation' ? (
+            <ReadMoreDetailCards
+              output={buildReputationReadMoreOutput(state.data.modulePayload as ReputationCheckResult)}
+            />
+          ) : null}
 
-              <SectionCard title="Evidence from endpoint data">
-                <BulletList items={narrative.evidence} />
-              </SectionCard>
-            </>
+          {safeModuleKey === 'http-headers' ? (
+            <ReadMoreDetailCards
+              output={buildHeadersReadMoreOutput(state.data.modulePayload as HeadersCheckResult)}
+            />
           ) : null}
         </Stack>
       </Stack>
@@ -402,25 +399,27 @@ export function ModuleDetailPage() {
   )
 }
 
-function SslReadMoreSection({
+function ReadMoreDetailCards({
   output,
   isExtendedDataReady,
 }: {
-  output: SslReadMoreOutput
-  isExtendedDataReady: boolean
+  output: ReadMoreOutput
+  isExtendedDataReady?: boolean
 }) {
   return (
     <Stack spacing={2}>
-      {!isExtendedDataReady ? (
+      {isExtendedDataReady === false ? (
         <Alert severity="info">
           Extended SSL endpoint data is still loading. The page will fill in certificate and cipher details when the
           API response arrives.
         </Alert>
       ) : null}
 
-      <SectionCard title="Domain overview">
-        <KeyValueRows rows={output.domainOverview} />
-      </SectionCard>
+      {output.overviewTitle && output.overview?.length ? (
+        <SectionCard title={output.overviewTitle}>
+          <KeyValueRows rows={output.overview} />
+        </SectionCard>
+      ) : null}
 
       {output.criteria.map((section) => (
         <SectionCard key={section.title} title={section.title}>
@@ -535,6 +534,27 @@ function fallback(value: string | undefined | null): string {
   return clean ? clean : 'Not provided by API'
 }
 
+function formatBoolean(value: boolean): string {
+  return value ? 'Yes' : 'No'
+}
+
+function formatList(values: string[], emptyLabel = 'None found'): string {
+  return values.length > 0 ? values.join(', ') : emptyLabel
+}
+
+function headerResultLabel(details: string): string {
+  const lower = details.toLowerCase()
+  if (lower.includes('missing') || lower.includes('not found') || lower.includes('neither')) {
+    return 'Missing'
+  }
+
+  if (lower.includes('unsafe') || lower.includes('weaker')) {
+    return 'Needs attention'
+  }
+
+  return 'Present'
+}
+
 function certificateCommonName(sslDetails?: SslDetailResult): string {
   const commonName = sslDetails?.certificate?.commonNames?.[0]
   if (commonName) return commonName
@@ -594,8 +614,7 @@ function buildSslReadMoreOutput(
   domain: string,
   data: SslCheckResult,
   sslDetails: SslDetailResult | undefined,
-  loadedAtIso: string,
-): SslReadMoreOutput {
+): ReadMoreOutput {
   const certificate = sslDetails?.certificate
   const endpoint = sslDetails?.endpoints?.[0]
   const ciphers = sslDetails?.notableCipherSuites?.length
@@ -610,7 +629,8 @@ function buildSslReadMoreOutput(
   }))
 
   return {
-    domainOverview: [
+    overviewTitle: 'Domain overview',
+    overview: [
       { pdfSubject: 'Domain', value: domain },
       { pdfSubject: 'Server IP', value: fallback(endpoint?.ipAddress) },
       { pdfSubject: 'Common Name', value: certificateCommonName(sslDetails) },
@@ -620,7 +640,6 @@ function buildSslReadMoreOutput(
       { pdfSubject: 'Issuer', value: fallback(certificate?.issuer) },
       { pdfSubject: 'Certificate valid from', value: formatReadMoreDate(certificate?.validFrom) },
       { pdfSubject: 'Certificate valid until', value: formatReadMoreDate(certificate?.validUntil) },
-      { pdfSubject: 'Test date', value: formatReadMoreDate(loadedAtIso) },
     ],
     criteria: [
       {
@@ -648,6 +667,113 @@ function buildSslReadMoreOutput(
           { pdfSubject: 'Forward Secrecy', value: ciphers.some((cipher) => cipher.toUpperCase().includes('ECDHE')) ? 'Yes' : 'Not provided by API' },
           { pdfSubject: 'Key Size', value: fallback(certificate?.key) },
           { pdfSubject: 'Signature Algorithm', value: fallback(certificate?.signatureAlgorithm) },
+        ],
+      },
+    ],
+  }
+}
+
+function buildEmailReadMoreOutput(data: EmailCheckResult): ReadMoreOutput {
+  return {
+    criteria: [
+      {
+        title: 'SPF-verifisering',
+        fields: [
+          { pdfSubject: 'Confidence', value: data.criteria.spfVerification.confidence },
+          { pdfSubject: 'Details', value: fallback(data.criteria.spfVerification.details) },
+          { pdfSubject: 'SPF record', value: fallback(data.dnsSummary.spfRecord) },
+          { pdfSubject: 'MX records', value: formatList(data.dnsSummary.mxRecords) },
+          { pdfSubject: 'Module applicable', value: formatBoolean(data.moduleApplicable) },
+        ],
+      },
+      {
+        title: 'DKIM aktivert',
+        fields: [
+          { pdfSubject: 'Confidence', value: data.criteria.dkimActivated.confidence },
+          { pdfSubject: 'Details', value: fallback(data.criteria.dkimActivated.details) },
+          { pdfSubject: 'DKIM selectors found', value: formatList(data.dnsSummary.dkimSelectorsFound) },
+          { pdfSubject: 'MX records', value: formatList(data.dnsSummary.mxRecords) },
+        ],
+      },
+      {
+        title: 'DMARC enforcement',
+        fields: [
+          { pdfSubject: 'Confidence', value: data.criteria.dmarcEnforcement.confidence },
+          { pdfSubject: 'Details', value: fallback(data.criteria.dmarcEnforcement.details) },
+          { pdfSubject: 'DMARC record', value: fallback(data.dnsSummary.dmarcRecord) },
+          { pdfSubject: 'SPF context', value: fallback(data.dnsSummary.spfRecord) },
+          { pdfSubject: 'Module applicable', value: formatBoolean(data.moduleApplicable) },
+        ],
+      },
+    ],
+  }
+}
+
+function buildHeadersReadMoreOutput(data: HeadersCheckResult): ReadMoreOutput {
+  return {
+    criteria: [
+      {
+        title: 'CSP-header (Content-Security-Policy)',
+        fields: [
+          { pdfSubject: 'Result', value: headerResultLabel(data.criteria.contentSecurityPolicy.details) },
+          { pdfSubject: 'Details', value: fallback(data.criteria.contentSecurityPolicy.details) },
+          { pdfSubject: 'Source', value: 'Mozilla Observatory API and live HTTP header probe' },
+          { pdfSubject: 'Details URL', value: fallback(data.observatory.detailsUrl) },
+        ],
+      },
+      {
+        title: 'X-Frame-Options / Clickjacking',
+        fields: [
+          { pdfSubject: 'Result', value: headerResultLabel(data.criteria.clickjackingProtection.details) },
+          { pdfSubject: 'Details', value: fallback(data.criteria.clickjackingProtection.details) },
+          { pdfSubject: 'Related risk', value: 'Clickjacking' },
+          { pdfSubject: 'HSTS context', value: fallback(data.criteria.strictTransportSecurity.details) },
+          { pdfSubject: 'MIME confusion context', value: fallback(data.criteria.mimeSniffingProtection.details) },
+          { pdfSubject: 'Referrer-Policy context', value: fallback(data.criteria.referrerPolicy.details) },
+        ],
+      },
+    ],
+  }
+}
+
+function buildReputationReadMoreOutput(data: ReputationCheckResult): ReadMoreOutput {
+  return {
+    overviewTitle: 'Reputation overview',
+    overview: [
+      { pdfSubject: 'Domain', value: data.domain },
+      { pdfSubject: 'Status', value: data.status },
+      { pdfSubject: 'Source', value: 'VirusTotal Public API' },
+      { pdfSubject: 'Permalink', value: fallback(data.summary.permalink) },
+    ],
+    criteria: [
+      {
+        title: 'Svartelistestatus',
+        fields: [
+          { pdfSubject: 'Malicious detections', value: `${data.summary.maliciousDetections}` },
+          { pdfSubject: 'Suspicious detections', value: `${data.summary.suspiciousDetections}` },
+          { pdfSubject: 'Details', value: fallback(data.criteria.blacklistStatus.details) },
+        ],
+      },
+      {
+        title: 'Malware-tilknytning',
+        fields: [
+          { pdfSubject: 'Malicious detections', value: `${data.summary.maliciousDetections}` },
+          { pdfSubject: 'Community malicious votes', value: `${data.summary.communityMaliciousVotes}` },
+          { pdfSubject: 'Details', value: fallback(data.criteria.malwareAssociation.details) },
+        ],
+      },
+      {
+        title: 'Tidligere kompromittering',
+        fields: [
+          { pdfSubject: 'Malicious detections', value: `${data.summary.maliciousDetections}` },
+          { pdfSubject: 'Suspicious detections', value: `${data.summary.suspiciousDetections}` },
+          {
+            pdfSubject: 'Assessment',
+            value:
+              data.summary.maliciousDetections > 0 || data.summary.suspiciousDetections > 0
+                ? 'VirusTotal has historical risk signals for this domain.'
+                : 'No historical malicious or suspicious VirusTotal detections were reported.',
+          },
         ],
       },
     ],
