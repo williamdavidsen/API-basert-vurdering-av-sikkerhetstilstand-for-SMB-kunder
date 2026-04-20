@@ -15,6 +15,16 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseInMemoryDatabase("SecurityAssessmentDb"));
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowFrontend", policy =>
+    {
+        policy.AllowAnyOrigin()
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+    });
+});
+
 builder.Services.AddScoped<IAssetRepository, AssetRepository>();
 builder.Services.AddScoped<IAssessmentRunRepository, AssessmentRunRepository>();
 builder.Services.AddScoped<ICheckTypeRepository, CheckTypeRepository>();
@@ -52,6 +62,8 @@ var app = builder.Build();
 app.MapOpenApi();
 app.UseSwagger();
 app.UseSwaggerUI();
+
+app.UseCors("AllowFrontend");
 
 // Ana sayfaya basit cevap ver
 app.MapGet("/", () => Results.Ok(new
