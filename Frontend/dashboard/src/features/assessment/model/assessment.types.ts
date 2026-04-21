@@ -214,8 +214,6 @@ export type ReputationCheckResult = {
   overallScore: number
   maxScore: number
   status: string
-  failureReason: string
-  providerStatusCode?: number
   criteria: ReputationCriteria
   summary: ReputationSummary
   alerts: ReputationAlert[]

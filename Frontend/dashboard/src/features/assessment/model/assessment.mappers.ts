@@ -272,7 +272,6 @@ export function buildModuleCards(bundle: AssessmentDashboardBundle): ModuleCardV
 
   const repBullet =
     (reputationIncluded ? reputation.criteria.blacklistStatus.details : undefined) ||
-    reputation.failureReason ||
     reputation.alerts[0]?.message ||
     (reputationIncluded
       ? `Sampled detections: malicious ${reputation.summary.maliciousDetections}, suspicious ${reputation.summary.suspiciousDetections}.`
