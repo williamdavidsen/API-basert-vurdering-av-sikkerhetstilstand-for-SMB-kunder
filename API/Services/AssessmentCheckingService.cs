@@ -61,6 +61,7 @@ namespace SecurityAssessmentAPI.Services
             var pqcResult = await pqcTask;
 
             var emailIncluded = emailResult.ModuleApplicable && emailResult.HasMailService;
+            var reputationIncluded = !string.Equals(reputationResult.Status, "ERROR", StringComparison.OrdinalIgnoreCase);
 
             var result = new AssessmentCheckResult
             {
@@ -69,8 +70,8 @@ namespace SecurityAssessmentAPI.Services
                 PqcReadiness = pqcResult
             };
 
-            ApplyWeights(result, emailIncluded);
-            PopulateModuleScores(result, sslResult, headersResult, emailResult, reputationResult, emailIncluded);
+            ApplyWeights(result, emailIncluded, reputationIncluded);
+            PopulateModuleScores(result, sslResult, headersResult, emailResult, reputationResult, emailIncluded, reputationIncluded);
 
             var total = result.Modules.SslTls.WeightedContribution +
                         result.Modules.HttpHeaders.WeightedContribution +
@@ -89,13 +90,28 @@ namespace SecurityAssessmentAPI.Services
             return result;
         }
 
-        private static void ApplyWeights(AssessmentCheckResult result, bool emailIncluded)
+        private static void ApplyWeights(AssessmentCheckResult result, bool emailIncluded, bool reputationIncluded)
         {
-            // Rebalance the model when email does not apply so the final score still totals 100%.
-            result.Weights.SslTls = emailIncluded ? SslWeightWithEmail : SslWeightWithoutEmail;
-            result.Weights.HttpHeaders = emailIncluded ? HeadersWeightWithEmail : HeadersWeightWithoutEmail;
-            result.Weights.EmailSecurity = emailIncluded ? EmailWeightWithEmail : 0m;
-            result.Weights.Reputation = emailIncluded ? ReputationWeightWithEmail : ReputationWeightWithoutEmail;
+            // Rebalance the model when optional/unavailable modules are excluded so the weighted score still totals 100%.
+            var baseSsl = emailIncluded ? SslWeightWithEmail : SslWeightWithoutEmail;
+            var baseHeaders = emailIncluded ? HeadersWeightWithEmail : HeadersWeightWithoutEmail;
+            var baseEmail = emailIncluded ? EmailWeightWithEmail : 0m;
+            var baseReputation = reputationIncluded ? (emailIncluded ? ReputationWeightWithEmail : ReputationWeightWithoutEmail) : 0m;
+
+            var totalIncludedWeight = baseSsl + baseHeaders + baseEmail + baseReputation;
+            if (totalIncludedWeight <= 0m)
+            {
+                result.Weights.SslTls = 0m;
+                result.Weights.HttpHeaders = 0m;
+                result.Weights.EmailSecurity = 0m;
+                result.Weights.Reputation = 0m;
+                return;
+            }
+
+            result.Weights.SslTls = Math.Round(baseSsl / totalIncludedWeight * 100m, 2);
+            result.Weights.HttpHeaders = Math.Round(baseHeaders / totalIncludedWeight * 100m, 2);
+            result.Weights.EmailSecurity = Math.Round(baseEmail / totalIncludedWeight * 100m, 2);
+            result.Weights.Reputation = Math.Round(baseReputation / totalIncludedWeight * 100m, 2);
         }
 
         private static void PopulateModuleScores(
@@ -104,11 +120,12 @@ namespace SecurityAssessmentAPI.Services
             HeadersCheckResult headersResult,
             EmailCheckResult emailResult,
             ReputationCheckResult reputationResult,
-            bool emailIncluded)
+            bool emailIncluded,
+            bool reputationIncluded)
         {
             result.Modules.SslTls = CreateModuleScore(true, result.Weights.SslTls, sslResult.OverallScore, sslResult.MaxScore, sslResult.Status);
             result.Modules.HttpHeaders = CreateModuleScore(true, result.Weights.HttpHeaders, headersResult.OverallScore, headersResult.MaxScore, headersResult.Status);
-            result.Modules.Reputation = CreateModuleScore(true, result.Weights.Reputation, reputationResult.OverallScore, reputationResult.MaxScore, reputationResult.Status);
+            result.Modules.Reputation = CreateModuleScore(reputationIncluded, result.Weights.Reputation, reputationResult.OverallScore, reputationResult.MaxScore, reputationResult.Status);
             result.Modules.EmailSecurity = emailIncluded
                 ? CreateModuleScore(true, result.Weights.EmailSecurity, emailResult.OverallScore, emailResult.MaxScore, emailResult.Status)
                 : CreateModuleScore(false, 0m, emailResult.OverallScore, emailResult.MaxScore, emailResult.Status);

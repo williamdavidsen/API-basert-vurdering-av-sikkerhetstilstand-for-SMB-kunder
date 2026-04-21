@@ -37,10 +37,10 @@ namespace SecurityAssessmentAPI.Services
 
         public async Task<VirusTotalDomainReport?> GetDomainReportAsync(string domain, CancellationToken cancellationToken = default)
         {
-            var apiKey = _configuration["VirusTotal:ApiKey"];
+            var apiKey = ResolveApiKey();
             if (string.IsNullOrWhiteSpace(apiKey))
             {
-                _logger.LogWarning("VirusTotal API key is not configured.");
+                _logger.LogWarning("VirusTotal API key is not configured. Set VirusTotal:ApiKey or VirusTotal__ApiKey in the host environment.");
                 return null;
             }
 
@@ -80,6 +80,23 @@ namespace SecurityAssessmentAPI.Services
                 _logger.LogWarning(ex, "VirusTotal request failed: {Domain}", domain);
                 return null;
             }
+        }
+
+        private string? ResolveApiKey()
+        {
+            var configuredKey = _configuration["VirusTotal:ApiKey"];
+            if (!string.IsNullOrWhiteSpace(configuredKey))
+            {
+                return configuredKey;
+            }
+
+            var environmentKey = Environment.GetEnvironmentVariable("VirusTotal__ApiKey");
+            if (!string.IsNullOrWhiteSpace(environmentKey))
+            {
+                return environmentKey;
+            }
+
+            return Environment.GetEnvironmentVariable("VirusTotal:ApiKey");
         }
 
         private static VirusTotalDomainReport ParseDomainReport(string json)

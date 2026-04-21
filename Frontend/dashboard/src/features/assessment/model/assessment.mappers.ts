@@ -63,6 +63,10 @@ export function dashboardHeadline(grade: string, status: string, score: number):
   const g = grade.trim().toUpperCase()
   const s = status.trim().toUpperCase()
 
+  if (s === 'PARTIAL') {
+    return 'Partial security assessment'
+  }
+
   if (score <= 0 || g === 'F' || (s === 'FAIL' && score < 50)) {
     return 'Critical security failure'
   }
@@ -74,11 +78,6 @@ export function dashboardHeadline(grade: string, status: string, score: number):
   if (s === 'WARNING' || g === 'C') {
     return 'Security posture needs attention'
   }
-
-  if (s === 'PARTIAL') {
-    return 'Partial security assessment'
-  }
-
   return 'Security analysis dashboard'
 }
 
@@ -255,11 +254,28 @@ export function buildModuleCards(bundle: AssessmentDashboardBundle): ModuleCardV
     reputation.summary.suspiciousDetections,
     reputation.summary.maliciousDetections,
   )
+  const reputationIncluded = assessment.modules.reputation.included
+
+  const reputationFacts: ModuleCardFact[] = reputationIncluded
+    ? [
+        { label: 'Verdict', value: repVerdict, tone: toneReputationVerdict(repVerdict) },
+        {
+          label: 'Signals',
+          value: `malicious ${reputation.summary.maliciousDetections}, suspicious ${reputation.summary.suspiciousDetections}`,
+          tone: 'neutral',
+        },
+      ]
+    : [
+        { label: 'Verdict', value: 'Not evaluated', tone: 'neutral' },
+        { label: 'Signals', value: 'Not evaluated', tone: 'neutral' },
+      ]
 
   const repBullet =
-    reputation.criteria.blacklistStatus.details ||
+    (reputationIncluded ? reputation.criteria.blacklistStatus.details : undefined) ||
     reputation.alerts[0]?.message ||
-    `Sampled detections: malicious ${reputation.summary.maliciousDetections}, suspicious ${reputation.summary.suspiciousDetections}.`
+    (reputationIncluded
+      ? `Sampled detections: malicious ${reputation.summary.maliciousDetections}, suspicious ${reputation.summary.suspiciousDetections}.`
+      : 'Domain / IP reputation was not included in the final weighted score because the upstream provider could not be reached reliably.')
 
   const repCallout = reputation.alerts.find((a) => a.type.toUpperCase().includes('CRITICAL'))
 
@@ -328,17 +344,11 @@ export function buildModuleCards(bundle: AssessmentDashboardBundle): ModuleCardV
     {
       key: 'reputation',
       title: 'Domain / IP reputation',
-      moduleGrade: gradeFromPercent(modulePercent(reputation.overallScore, reputation.maxScore)),
+      moduleGrade: reputationIncluded ? gradeFromPercent(modulePercent(reputation.overallScore, reputation.maxScore)) : '—',
       moduleApiStatus: reputation.status,
-      scoreFill: { current: reputation.overallScore, max: reputation.maxScore },
-      facts: [
-        { label: 'Verdict', value: repVerdict, tone: toneReputationVerdict(repVerdict) },
-        {
-          label: 'Signals',
-          value: `malicious ${reputation.summary.maliciousDetections}, suspicious ${reputation.summary.suspiciousDetections}`,
-          tone: 'neutral',
-        },
-      ],
+      scoreFill: reputationIncluded ? { current: reputation.overallScore, max: reputation.maxScore } : undefined,
+      statusLine: reputationIncluded ? undefined : 'Not evaluated',
+      facts: reputationFacts,
       bullet: hideBulletIfSameAsCallout(
         repBullet ? `• ${repBullet}` : undefined,
         repCallout?.message,
