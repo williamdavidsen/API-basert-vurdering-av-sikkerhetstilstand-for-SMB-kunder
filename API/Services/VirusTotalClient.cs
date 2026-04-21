@@ -19,7 +19,14 @@ namespace SecurityAssessmentAPI.Services
 
     public interface IVirusTotalClient
     {
-        Task<VirusTotalDomainReport?> GetDomainReportAsync(string domain, CancellationToken cancellationToken = default);
+        Task<VirusTotalLookupResult> GetDomainReportAsync(string domain, CancellationToken cancellationToken = default);
+    }
+
+    public class VirusTotalLookupResult
+    {
+        public VirusTotalDomainReport? Report { get; set; }
+        public string FailureReason { get; set; } = string.Empty;
+        public int? ProviderStatusCode { get; set; }
     }
 
     public class VirusTotalClient : IVirusTotalClient
@@ -35,13 +42,16 @@ namespace SecurityAssessmentAPI.Services
             _logger = logger;
         }
 
-        public async Task<VirusTotalDomainReport?> GetDomainReportAsync(string domain, CancellationToken cancellationToken = default)
+        public async Task<VirusTotalLookupResult> GetDomainReportAsync(string domain, CancellationToken cancellationToken = default)
         {
             var apiKey = ResolveApiKey();
             if (string.IsNullOrWhiteSpace(apiKey))
             {
                 _logger.LogWarning("VirusTotal API key is not configured. Set VirusTotal:ApiKey or VirusTotal__ApiKey in the host environment.");
-                return null;
+                return new VirusTotalLookupResult
+                {
+                    FailureReason = "VirusTotal API key is missing in the backend environment."
+                };
             }
 
             var url = $"https://www.virustotal.com/api/v3/domains/{Uri.EscapeDataString(domain)}";
@@ -59,10 +69,13 @@ namespace SecurityAssessmentAPI.Services
                 if (response.StatusCode == HttpStatusCode.NotFound)
                 {
                     _logger.LogInformation("VirusTotal did not return a report for domain: {Domain}", domain);
-                    return new VirusTotalDomainReport
+                    return new VirusTotalLookupResult
                     {
-                        Domain = domain,
-                        Permalink = $"https://www.virustotal.com/gui/domain/{domain}"
+                        Report = new VirusTotalDomainReport
+                        {
+                            Domain = domain,
+                            Permalink = $"https://www.virustotal.com/gui/domain/{domain}"
+                        }
                     };
                 }
 
@@ -70,16 +83,39 @@ namespace SecurityAssessmentAPI.Services
                 {
                     _logger.LogWarning("VirusTotal returned non-success status: Domain={Domain}, Status={StatusCode}, Body={Body}",
                         domain, (int)response.StatusCode, json);
-                    return null;
+                    return new VirusTotalLookupResult
+                    {
+                        FailureReason = DescribeFailureReason(response.StatusCode),
+                        ProviderStatusCode = (int)response.StatusCode
+                    };
                 }
 
-                return ParseDomainReport(json);
+                return new VirusTotalLookupResult
+                {
+                    Report = ParseDomainReport(json)
+                };
             }
             catch (Exception ex)
             {
                 _logger.LogWarning(ex, "VirusTotal request failed: {Domain}", domain);
-                return null;
+                return new VirusTotalLookupResult
+                {
+                    FailureReason = $"VirusTotal request failed before a response was returned: {ex.GetType().Name}."
+                };
             }
+        }
+
+        private static string DescribeFailureReason(HttpStatusCode statusCode)
+        {
+            return statusCode switch
+            {
+                HttpStatusCode.Unauthorized => "VirusTotal rejected the API key (401 Unauthorized).",
+                HttpStatusCode.Forbidden => "VirusTotal blocked the request (403 Forbidden). Check plan or access restrictions.",
+                (HttpStatusCode)429 => "VirusTotal rate limit or quota was exceeded (429 Too Many Requests).",
+                HttpStatusCode.BadRequest => "VirusTotal rejected the request format (400 Bad Request).",
+                HttpStatusCode.NotFound => "VirusTotal does not currently have a report for this domain.",
+                _ => $"VirusTotal returned HTTP {(int)statusCode}."
+            };
         }
 
         private string? ResolveApiKey()

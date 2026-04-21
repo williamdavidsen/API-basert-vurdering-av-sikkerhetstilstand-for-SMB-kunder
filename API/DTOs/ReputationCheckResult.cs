@@ -6,6 +6,8 @@ namespace SecurityAssessmentAPI.DTOs
         public int OverallScore { get; set; }
         public int MaxScore { get; set; } = 20;
         public string Status { get; set; } = "UNKNOWN";
+        public string FailureReason { get; set; } = string.Empty;
+        public int? ProviderStatusCode { get; set; }
         public ReputationCriteria Criteria { get; set; } = new();
         public ReputationSummary Summary { get; set; } = new();
         public List<ReputationAlert> Alerts { get; set; } = new();

@@ -24,10 +24,15 @@ namespace SecurityAssessmentAPI.Services
             _logger.LogInformation("Reputation check started: {Domain}", normalizedDomain);
 
             // Pull one normalized report and translate it into a bounded score instead of exposing provider-specific noise directly.
-            var report = await _virusTotalClient.GetDomainReportAsync(normalizedDomain, cancellationToken);
+            var lookup = await _virusTotalClient.GetDomainReportAsync(normalizedDomain, cancellationToken);
+            var report = lookup.Report;
             if (report == null)
             {
-                return CreateErrorResult(normalizedDomain, "VirusTotal data could not be retrieved. Check API key, quota, or domain availability.");
+                var diagnosticMessage = string.IsNullOrWhiteSpace(lookup.FailureReason)
+                    ? "VirusTotal data could not be retrieved. Check API key, quota, or domain availability."
+                    : lookup.FailureReason;
+
+                return CreateErrorResult(normalizedDomain, diagnosticMessage, lookup.ProviderStatusCode);
             }
 
             var result = new ReputationCheckResult
@@ -202,12 +207,14 @@ namespace SecurityAssessmentAPI.Services
                 .TrimEnd('/');
         }
 
-        private static ReputationCheckResult CreateErrorResult(string domain, string message)
+        private static ReputationCheckResult CreateErrorResult(string domain, string message, int? providerStatusCode = null)
         {
             return new ReputationCheckResult
             {
                 Domain = domain,
                 Status = "ERROR",
+                FailureReason = message,
+                ProviderStatusCode = providerStatusCode,
                 Alerts = new List<ReputationAlert>
                 {
                     new ReputationAlert

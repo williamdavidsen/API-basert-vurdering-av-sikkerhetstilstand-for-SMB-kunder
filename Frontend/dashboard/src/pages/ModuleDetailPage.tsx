@@ -737,12 +737,16 @@ function buildHeadersReadMoreOutput(data: HeadersCheckResult): ReadMoreOutput {
 }
 
 function buildReputationReadMoreOutput(data: ReputationCheckResult): ReadMoreOutput {
+  const statusLabel =
+    data.providerStatusCode != null ? `${data.status} (HTTP ${data.providerStatusCode})` : data.status
+
   return {
     overviewTitle: 'Reputation overview',
     overview: [
       { pdfSubject: 'Domain', value: data.domain },
-      { pdfSubject: 'Status', value: data.status },
+      { pdfSubject: 'Status', value: statusLabel },
       { pdfSubject: 'Source', value: 'VirusTotal Public API' },
+      { pdfSubject: 'Failure reason', value: fallback(data.failureReason) },
       { pdfSubject: 'Permalink', value: fallback(data.summary.permalink) },
     ],
     criteria: [
@@ -903,8 +907,10 @@ function buildNarrative(moduleKey: DashboardModuleKey, payload: ModulePayload, s
     moduleGrade: gradeFromPercent(modulePercent(data.overallScore, data.maxScore)),
     status: data.status,
     summary: [
-      data.criteria.blacklistStatus.details,
-      data.criteria.malwareAssociation.details,
+      data.failureReason || data.criteria.blacklistStatus.details,
+      data.providerStatusCode != null
+        ? `VirusTotal provider response: HTTP ${data.providerStatusCode}.`
+        : data.criteria.malwareAssociation.details,
       `Detection profile: malicious ${data.summary.maliciousDetections}, suspicious ${data.summary.suspiciousDetections}, harmless ${data.summary.harmlessDetections}.`,
     ],
     recommendation:
@@ -918,6 +924,7 @@ function buildNarrative(moduleKey: DashboardModuleKey, payload: ModulePayload, s
     ],
     evidence: [
       `Reputation score: ${data.summary.reputation}.`,
+      data.providerStatusCode != null ? `Provider status code: HTTP ${data.providerStatusCode}.` : 'Provider status code: not returned.',
       `Community votes: malicious ${data.summary.communityMaliciousVotes}, harmless ${data.summary.communityHarmlessVotes}.`,
       `Last analysis date: ${data.summary.lastAnalysisDate || 'not provided'}.`,
       data.summary.permalink ? `Source permalink: ${data.summary.permalink}` : 'No source permalink provided.',
