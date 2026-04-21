@@ -7,6 +7,7 @@ RUN dotnet restore
 
 COPY . ./
 RUN dotnet publish -c Release -o /app/publish
+RUN dotnet publish SecurityAssessmentAPI.csproj -c Release -o /app/publish
 
 # Runtime stage
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
