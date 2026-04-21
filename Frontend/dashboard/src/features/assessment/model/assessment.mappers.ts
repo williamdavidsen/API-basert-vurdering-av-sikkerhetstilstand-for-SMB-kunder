@@ -1,5 +1,5 @@
 ﻿import { gradeFromPercent, modulePercent } from '../../../shared/lib/score'
-import type { AssessmentDashboardBundle, HeadersObservatorySummary } from './assessment.types'
+import type { AssessmentDashboardBundle } from './assessment.types'
 import type { DashboardModuleKey } from './assessment.types'
 
 export type ExecutiveBanner = {
@@ -180,19 +180,6 @@ function toneReputationVerdict(value: string): ModuleFactTone {
   return 'neutral'
 }
 
-function formatObservatoryStatusLine(observatory: HeadersObservatorySummary): string {
-  const grade = observatory.grade && observatory.grade !== 'UNAVAILABLE' ? observatory.grade : 'N/A'
-
-  if (observatory.testsQuantity > 0) {
-    return `Observatory: grade ${grade}, score ${observatory.score}/100, passed ${observatory.testsPassed}/${observatory.testsQuantity}`
-  }
-
-  if (observatory.score > 0) {
-    return `Observatory: grade ${grade}, score ${observatory.score}/100`
-  }
-
-  return 'Observatory: data not available for this scan'
-}
 export function buildModuleCards(bundle: AssessmentDashboardBundle): ModuleCardView[] {
   const { assessment, ssl, headers, email, reputation } = bundle
 
@@ -307,7 +294,6 @@ export function buildModuleCards(bundle: AssessmentDashboardBundle): ModuleCardV
       moduleGrade: observatoryGrade,
       moduleApiStatus: headers.status,
       scoreFill: { current: headers.overallScore, max: headers.maxScore },
-      statusLine: formatObservatoryStatusLine(headers.observatory),
       facts: [
         { label: 'HSTS', value: hstsVal, tone: toneHeaderPresence(hstsVal) },
         { label: 'CSP', value: cspVal, tone: toneHeaderPresence(cspVal) },
