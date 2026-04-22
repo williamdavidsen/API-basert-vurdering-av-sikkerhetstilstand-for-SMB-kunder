@@ -26,7 +26,8 @@ export function TopBar({ title }: TopBarProps) {
   const location = useLocation()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [threatSubmenuOpen, setThreatSubmenuOpen] = useState(location.pathname.startsWith(routes.threatLandscape))
-  const appTitle = 'SMB Security Insight'
+  const appTitleTop = 'SecureScan'
+  const appTitleBottom = 'for SMBs'
   const navItems = [
     { label: 'Home', mobileLabel: 'Home', to: routes.home },
     { label: 'Dashboard', mobileLabel: 'Dashboard', to: routes.dashboard },
@@ -78,19 +79,69 @@ export function TopBar({ title }: TopBarProps) {
           aria-label="Go to home page"
         >
           <Box component="img" src={siteLogo} alt="" aria-hidden sx={{ width: 24, height: 24 }} />
-          <Typography
+          <Box
             sx={{
-              fontWeight: 800,
-              fontSize: { xs: 13, md: 16 },
-              letterSpacing: 0.2,
-              maxWidth: { xs: 110, sm: 'none' },
-              whiteSpace: 'nowrap',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
+              display: 'inline-flex',
+              flexDirection: 'column',
+              minWidth: 0,
+              maxWidth: { xs: 150, sm: 'none' },
+              width: 'fit-content',
             }}
           >
-            {appTitle}
-          </Typography>
+            <Typography
+              sx={{
+                fontWeight: 800,
+                fontSize: { xs: 13.6, md: 17.1 },
+                letterSpacing: { xs: 0.05, md: 0.1 },
+                lineHeight: 1.05,
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+              }}
+            >
+              {appTitleTop}
+            </Typography>
+            <Box
+              sx={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: { xs: 0.4, md: 0.7 },
+                mt: 0.1,
+                width: '100%',
+                minWidth: 0,
+              }}
+            >
+              <Box
+                component="span"
+                sx={{
+                  flex: 1,
+                  height: 1.5,
+                  minWidth: { xs: 10, md: 18 },
+                  bgcolor: 'rgba(255,255,255,0.7)',
+                }}
+              />
+              <Typography
+                sx={{
+                  fontWeight: 700,
+                  fontSize: { xs: 9.4, md: 10.8 },
+                  letterSpacing: { xs: 0.2, md: 0.35 },
+                  lineHeight: 1,
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {appTitleBottom}
+              </Typography>
+              <Box
+                component="span"
+                sx={{
+                  flex: 1,
+                  height: 1.5,
+                  minWidth: { xs: 10, md: 18 },
+                  bgcolor: 'rgba(255,255,255,0.7)',
+                }}
+              />
+            </Box>
+          </Box>
         </Box>
 
         <Box
