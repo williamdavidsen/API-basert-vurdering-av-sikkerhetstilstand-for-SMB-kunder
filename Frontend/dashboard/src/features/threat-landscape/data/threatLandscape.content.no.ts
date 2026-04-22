@@ -52,8 +52,7 @@ export const threatLandscapeContent: Record<string, ThreatLandscapeContent> = {
         'Harden email controls (SPF, DKIM, DMARC) and strengthen link/attachment filtering.',
       ],
     },
-    footerNote:
-      'Global perspective based on ENISA and DBIR reports. Figures are included for awareness and prioritization, not direct regulatory reporting.',
+    footerNote: 'This view summarizes global phishing trends reported by ENISA and DBIR.',
   },
   [threatTopics.weakTlsCerts]: {
     topic: threatTopics.weakTlsCerts,
@@ -105,8 +104,7 @@ export const threatLandscapeContent: Record<string, ThreatLandscapeContent> = {
         'Set strict patch SLAs for internet-facing systems and verify closure with rescans.',
       ],
     },
-    footerNote:
-      'Figures summarize high-level trends from ENISA and DBIR. Use them to prioritize technical hardening in customer-facing services.',
+    footerNote: 'Figures summarize high-level trends from ENISA and DBIR.',
   },
   [threatTopics.missingHeaders]: {
     topic: threatTopics.missingHeaders,
