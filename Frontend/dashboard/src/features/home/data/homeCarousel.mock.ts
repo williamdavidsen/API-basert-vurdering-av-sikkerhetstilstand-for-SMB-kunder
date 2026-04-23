@@ -1,7 +1,7 @@
 import type { HomeSlide } from '../model/home.types'
-import hero1Image from '../../../assets/images/home/hero01.jpeg'
-import hero2Image from '../../../assets/images/home/hero02.jpeg'
-import hero3Image from '../../../assets/images/home/hero03.jpeg'
+import hero1Image from '../../../assets/images/home/hero01.png'
+import hero2Image from '../../../assets/images/home/hero02.png'
+import hero3Image from '../../../assets/images/home/hero03.png'
 
 export const homeSlides: HomeSlide[] = [
   {
