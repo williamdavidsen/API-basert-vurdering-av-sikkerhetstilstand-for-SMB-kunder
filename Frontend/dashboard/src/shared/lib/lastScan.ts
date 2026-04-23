@@ -1,7 +1,9 @@
+import { normalizeDomainInput } from './domain'
+
 const LAST_SCANNED_DOMAIN_KEY = 'smb.lastScannedDomain'
 
 export function saveLastScannedDomain(domain: string): void {
-  const value = domain.trim().toLowerCase()
+  const value = normalizeDomainInput(domain)
   if (!value) return
 
   try {
@@ -13,7 +15,7 @@ export function saveLastScannedDomain(domain: string): void {
 
 export function getLastScannedDomain(): string | null {
   try {
-    const value = window.localStorage.getItem(LAST_SCANNED_DOMAIN_KEY)?.trim()
+    const value = normalizeDomainInput(window.localStorage.getItem(LAST_SCANNED_DOMAIN_KEY) ?? '')
     return value ? value : null
   } catch {
     return null

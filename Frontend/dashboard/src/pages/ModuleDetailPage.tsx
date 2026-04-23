@@ -27,6 +27,7 @@ import {
   fetchSslCheck,
 } from '../features/assessment/services/assessment.api'
 import { routes } from '../shared/constants/routes'
+import { normalizeDomainInput } from '../shared/lib/domain'
 import { gradeFromPercent, modulePercent } from '../shared/lib/score'
 
 type ModulePayload = SslCheckResult | HeadersCheckResult | EmailCheckResult | ReputationCheckResult
@@ -86,9 +87,9 @@ export function ModuleDetailPage() {
   const domain = useMemo(() => {
     const raw = params.domain ?? ''
     try {
-      return decodeURIComponent(raw).trim()
+      return normalizeDomainInput(decodeURIComponent(raw))
     } catch {
-      return raw.trim()
+      return normalizeDomainInput(raw)
     }
   }, [params.domain])
 

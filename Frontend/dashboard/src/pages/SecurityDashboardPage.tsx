@@ -20,6 +20,7 @@ import {
   pickExecutiveBanner,
 } from '../features/assessment/model/assessment.mappers'
 import { routes } from '../shared/constants/routes'
+import { normalizeDomainInput } from '../shared/lib/domain'
 import { getLastScannedDomain, saveLastScannedDomain } from '../shared/lib/lastScan'
 import { mapAssessmentStatus } from '../shared/lib/status'
 
@@ -41,7 +42,7 @@ function formatNorwegianDateTime(iso: string): string {
 export function SecurityDashboardPage() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  const domain = useMemo(() => searchParams.get('domain')?.trim() ?? '', [searchParams])
+  const domain = useMemo(() => normalizeDomainInput(searchParams.get('domain') ?? ''), [searchParams])
   const lastScannedDomain = useMemo(() => getLastScannedDomain(), [])
   const { state, refetch } = useAssessmentDashboard(domain)
   const [pqcOpen, setPqcOpen] = useState(false)

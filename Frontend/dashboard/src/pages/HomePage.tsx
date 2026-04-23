@@ -4,12 +4,13 @@ import { useNavigate } from 'react-router-dom'
 import { DomainScanForm } from '../features/home/components/DomainScanForm'
 import { HomeCarousel } from '../features/home/components/HomeCarousel'
 import { routes } from '../shared/constants/routes'
+import { normalizeDomainInput } from '../shared/lib/domain'
 
 export function HomePage() {
   const navigate = useNavigate()
 
   const handleSubmitDomain = (domain: string) => {
-    const params = new URLSearchParams({ domain })
+    const params = new URLSearchParams({ domain: normalizeDomainInput(domain) })
     navigate(`${routes.scan}?${params.toString()}`)
   }
 

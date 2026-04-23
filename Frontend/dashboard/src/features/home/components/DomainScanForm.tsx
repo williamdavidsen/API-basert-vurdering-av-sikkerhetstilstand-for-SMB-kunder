@@ -7,30 +7,24 @@ import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
 import { useState } from 'react'
 import type { FormEvent } from 'react'
+import { isValidDomain, normalizeDomainInput } from '../../../shared/lib/domain'
 
 type DomainScanFormProps = {
   onSubmitDomain: (domain: string) => void
 }
-
-const domainPattern =
-  /^(?!:\/\/)([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,63}$/
 
 export function DomainScanForm({ onSubmitDomain }: DomainScanFormProps) {
   const [domain, setDomain] = useState('')
   const [error, setError] = useState('')
 
   const validateDomain = (value: string) => {
-    const normalized = value.trim().toLowerCase()
+    const normalized = normalizeDomainInput(value)
 
     if (!normalized) {
       return 'Domain is required.'
     }
 
-    if (normalized.startsWith('http://') || normalized.startsWith('https://')) {
-      return 'Please enter only the domain name, for example firma.no'
-    }
-
-    if (!domainPattern.test(normalized)) {
+    if (!isValidDomain(value)) {
       return 'Please enter a valid domain like example.com'
     }
 
@@ -39,8 +33,8 @@ export function DomainScanForm({ onSubmitDomain }: DomainScanFormProps) {
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    const normalized = domain.trim().toLowerCase()
-    const validationMessage = validateDomain(normalized)
+    const normalized = normalizeDomainInput(domain)
+    const validationMessage = validateDomain(domain)
 
     if (validationMessage) {
       setError(validationMessage)
@@ -90,7 +84,7 @@ export function DomainScanForm({ onSubmitDomain }: DomainScanFormProps) {
             required
             fullWidth
             error={Boolean(error)}
-            helperText={error || 'Enter only the domain, without http:// or https://'}
+            helperText={error || 'You can enter a full URL or a domain like firma.no'}
           />
 
           {error ? <Alert severity="error">{error}</Alert> : null}

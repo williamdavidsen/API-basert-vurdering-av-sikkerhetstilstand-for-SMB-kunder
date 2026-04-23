@@ -7,12 +7,13 @@ import { ScanCancelButton } from '../features/scan/components/ScanCancelButton'
 import { ScanSpinner } from '../features/scan/components/ScanSpinner'
 import { useScanProgress } from '../features/scan/hooks/useScanProgress'
 import { routes } from '../shared/constants/routes'
+import { normalizeDomainInput } from '../shared/lib/domain'
 import { saveLastScannedDomain } from '../shared/lib/lastScan'
 
 export function ScanProgressPage() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  const domain = searchParams.get('domain')?.trim() ?? ''
+  const domain = normalizeDomainInput(searchParams.get('domain') ?? '')
   const { progress, currentStep, estimatedLabel, isComplete } = useScanProgress()
 
   useEffect(() => {

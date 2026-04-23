@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { normalizeDomainInput } from '../../../shared/lib/domain'
 import { fetchAssessmentDashboardBundle } from '../services/assessment.api'
 import type { AssessmentDashboardBundle } from '../model/assessment.types'
 
@@ -10,7 +11,7 @@ type ErrorState = { status: 'error'; message: string }
 export type AssessmentDashboardState = Idle | Loading | Success | ErrorState
 
 export function useAssessmentDashboard(domain: string) {
-  const normalizedDomain = useMemo(() => domain.trim(), [domain])
+  const normalizedDomain = useMemo(() => normalizeDomainInput(domain), [domain])
   const [state, setState] = useState<AssessmentDashboardState>({ status: 'idle' })
   const [refreshToken, setRefreshToken] = useState(0)
 

@@ -1,4 +1,5 @@
 import { apiUrl } from '../../../shared/lib/apiBase'
+import { normalizeDomainInput } from '../../../shared/lib/domain'
 import type {
   AssessmentCheckResult,
   AssessmentDashboardBundle,
@@ -27,7 +28,7 @@ async function fetchJson<T>(url: string, init?: RequestInit): Promise<T> {
 }
 
 function encodeDomain(domain: string): string {
-  return encodeURIComponent(domain.trim())
+  return encodeURIComponent(normalizeDomainInput(domain))
 }
 
 export async function fetchAssessmentDashboardBundle(
