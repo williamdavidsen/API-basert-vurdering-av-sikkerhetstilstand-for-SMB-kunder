@@ -3,16 +3,16 @@ import { createTheme } from '@mui/material/styles'
 export const appTheme = createTheme({
   palette: {
     primary: {
-      main: '#00bcd4',
+      main: '#008ea1',
       light: '#b2ebf2',
-      dark: '#0097a7',
+      dark: '#006977',
       contrastText: '#ffffff',
     },
     // Cyan–teal family aligned with primary (headings, links); avoids heavy forest green.
     secondary: {
-      main: '#00acc1',
+      main: '#006d77',
       light: '#b2ebf2',
-      dark: '#00838f',
+      dark: '#004f56',
       contrastText: '#ffffff',
     },
     success: {

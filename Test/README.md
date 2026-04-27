@@ -9,18 +9,19 @@ This folder is the testing workspace for the security assessment system. It is o
 - `API.UnitTests`: fast backend tests for services, mapping, and business rules.
 - `API.IntegrationTests`: API endpoint tests using an in-memory test server.
 - `Frontend.UnitTests`: Vitest tests for frontend utility and mapping logic.
-- `E2E`: Playwright tests for user flows through the dashboard.
+- `E2E`: Playwright tests for user flows through the dashboard, accessibility smoke, visual regression, and an opt-in live full-stack smoke flow.
 - `ManualTests`: exploratory and checklist-based manual testing.
 - `Reports`: test execution summaries, coverage notes, and defect log.
 - `AssessmentBatchRunner`: optional batch evaluation tool for running many domains.
+- `NonFunctional`: lightweight load and resilience smoke helpers.
 
 ## Recommended Commands
 
 From the repository root:
 
 ```powershell
-dotnet test .\Test\API.UnitTests\API.UnitTests.csproj
-dotnet test .\Test\API.IntegrationTests\API.IntegrationTests.csproj
+dotnet test .\Test\API.UnitTests\API.UnitTests.csproj -m:1
+dotnet test .\Test\API.IntegrationTests\API.IntegrationTests.csproj -m:1
 ```
 
 Frontend unit tests:
@@ -37,6 +38,30 @@ End-to-end tests:
 cd .\Test\E2E
 npm install
 npm test
+npm run test:update-snapshots
+```
+
+Frontend coverage:
+
+```powershell
+cd .\Test\Frontend.UnitTests
+npm run test:coverage
+```
+
+Live validation helpers:
+
+```powershell
+pwsh .\Test\AssessmentBatchRunner\run-live-validation.ps1
+cd .\Test\E2E
+$env:LIVE_E2E_DOMAIN="example.com"
+npm run test:live
+```
+
+Non-functional smoke helpers:
+
+```powershell
+pwsh .\Test\NonFunctional\load-smoke.ps1
+pwsh .\Test\NonFunctional\resilience-smoke.ps1
 ```
 
 ## Test Levels
@@ -44,6 +69,8 @@ npm test
 - Unit tests verify isolated business rules and scoring decisions.
 - Integration tests verify API routing, HTTP status codes, and controller/service contracts.
 - E2E tests verify user-visible flows from domain input to assessment result.
+- Accessibility smoke verifies labelled forms, progress announcements, heading structure, and the absence of serious/critical axe violations on key pages.
+- Visual regression tests verify stable baselines for the home page, dashboard, and module detail page.
 - Manual tests cover exploratory usability and security review areas that are expensive or brittle to automate.
 
 ## Course Alignment

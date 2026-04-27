@@ -1,4 +1,3 @@
-example.com
 oslomet.no
 uio.no
 ntnu.no

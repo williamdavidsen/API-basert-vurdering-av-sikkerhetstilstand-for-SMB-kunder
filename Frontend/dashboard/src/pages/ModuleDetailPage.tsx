@@ -199,6 +199,8 @@ export function ModuleDetailPage() {
 
       const safeDomain = domain.replace(/[^a-z0-9.-]/gi, '_')
       pdf.save(`read-more-${moduleKey}-${safeDomain}.pdf`)
+    } catch {
+      // Keep the detail page usable even if client-side PDF export fails.
     } finally {
       setIsDownloadingPdf(false)
     }

@@ -40,7 +40,7 @@ namespace SecurityAssessmentAPI.Controllers.Api
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Unexpected error during SSL check: {Domain}", request.Domain);
-                return StatusCode(500, new { message = "SSL check could not be performed", error = ex.Message });
+                return StatusCode(500, new { message = "SSL check could not be performed" });
             }
         }
 
@@ -68,7 +68,7 @@ namespace SecurityAssessmentAPI.Controllers.Api
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Unexpected error during SSL check GET: {Domain}", domain);
-                return StatusCode(500, new { message = "SSL check could not be performed", error = ex.Message });
+                return StatusCode(500, new { message = "SSL check could not be performed" });
             }
         }
 
@@ -95,7 +95,7 @@ namespace SecurityAssessmentAPI.Controllers.Api
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Unexpected error during SSL details GET: {Domain}", domain);
-                return StatusCode(500, new { message = "SSL details could not be performed", error = ex.Message });
+                return StatusCode(500, new { message = "SSL details could not be performed" });
             }
         }
     }

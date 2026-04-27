@@ -113,4 +113,4 @@ if (await isPortOpen(apiPort)) {
   startProcess('api', 'dotnet', ['run', '--project', apiProject, '--launch-profile', 'http'], repoRoot)
 }
 
-startProcess('frontend', process.execPath, [viteCli], dashboardRoot)
+startProcess('frontend', process.execPath, [viteCli, '--config', 'vite.config.mjs'], dashboardRoot)

@@ -145,6 +145,40 @@ public sealed class AssessmentCheckingServiceTests
             alert.Message.Contains("Critical SSL/TLS findings", StringComparison.OrdinalIgnoreCase));
     }
 
+    [Fact]
+    public async Task CheckAssessmentAsync_WhenMultipleModulesFail_FinalStatusRemainsFail()
+    {
+        var service = CreateService(
+            ssl: new SslCheckResult { OverallScore = 18, MaxScore = 30, Status = "WARNING" },
+            headers: new HeadersCheckResult { OverallScore = 0, MaxScore = 10, Status = "FAIL" },
+            email: new EmailCheckResult { ModuleApplicable = true, HasMailService = true, OverallScore = 0, MaxScore = 20, Status = "FAIL" },
+            reputation: new ReputationCheckResult { OverallScore = 20, MaxScore = 20, Status = "PASS" });
+
+        var result = await service.CheckAssessmentAsync("example.com");
+
+        Assert.Equal("FAIL", result.Status);
+        Assert.Equal("F", result.Grade);
+        Assert.Equal("FAIL", result.Modules.EmailSecurity.Status);
+        Assert.Equal("FAIL", result.Modules.HttpHeaders.Status);
+    }
+
+    [Fact]
+    public async Task CheckAssessmentAsync_WhenOneModuleIsExcludedAndAnotherFails_PreservesFailureStatus()
+    {
+        var service = CreateService(
+            ssl: new SslCheckResult { OverallScore = 18, MaxScore = 30, Status = "WARNING" },
+            headers: new HeadersCheckResult { OverallScore = 0, MaxScore = 10, Status = "FAIL" },
+            email: new EmailCheckResult { ModuleApplicable = true, HasMailService = false, OverallScore = 0, MaxScore = 20, Status = "INFO" },
+            reputation: new ReputationCheckResult { OverallScore = 4, MaxScore = 20, Status = "FAIL" });
+
+        var result = await service.CheckAssessmentAsync("example.com");
+
+        Assert.False(result.EmailModuleIncluded);
+        Assert.Equal("FAIL", result.Status);
+        Assert.Equal("F", result.Grade);
+        Assert.True(result.Modules.Reputation.Included);
+    }
+
     private static AssessmentCheckingService CreateService(
         SslCheckResult ssl,
         HeadersCheckResult headers,

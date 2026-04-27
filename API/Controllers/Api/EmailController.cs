@@ -40,7 +40,7 @@ namespace SecurityAssessmentAPI.Controllers.Api
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Unexpected error during email check: {Domain}", request.Domain);
-                return StatusCode(500, new { message = "Email security check could not be performed", error = ex.Message });
+                return StatusCode(500, new { message = "Email security check could not be performed" });
             }
         }
 
@@ -68,7 +68,7 @@ namespace SecurityAssessmentAPI.Controllers.Api
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Unexpected error during email check GET: {Domain}", domain);
-                return StatusCode(500, new { message = "Email security check could not be performed", error = ex.Message });
+                return StatusCode(500, new { message = "Email security check could not be performed" });
             }
         }
     }

@@ -14,6 +14,7 @@ export function ScanSpinner({ progress }: ScanSpinnerProps) {
         value={100}
         size={132}
         thickness={4.5}
+        aria-hidden="true"
         sx={{ color: 'rgba(0, 166, 186, 0.2)' }}
       />
       <CircularProgress
@@ -21,6 +22,7 @@ export function ScanSpinner({ progress }: ScanSpinnerProps) {
         value={progress}
         size={132}
         thickness={4.5}
+        aria-label={`Scan progress ${progress}%`}
         sx={{
           color: '#00a6ba',
           position: 'absolute',
@@ -38,6 +40,7 @@ export function ScanSpinner({ progress }: ScanSpinnerProps) {
         disableShrink
         size={82}
         thickness={4}
+        aria-hidden="true"
         sx={{
           color: 'rgba(0, 166, 186, 0.75)',
           position: 'absolute',

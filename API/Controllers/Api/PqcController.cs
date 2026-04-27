@@ -40,7 +40,7 @@ namespace SecurityAssessmentAPI.Controllers.Api
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Unexpected error during PQC check GET: {Domain}", domain);
-                return StatusCode(500, new { message = "PQC check could not be performed", error = ex.Message });
+                return StatusCode(500, new { message = "PQC check could not be performed" });
             }
         }
     }

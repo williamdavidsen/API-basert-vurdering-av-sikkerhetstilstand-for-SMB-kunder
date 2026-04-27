@@ -3,17 +3,20 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "vitest run --pool=threads",
-    "test:watch": "vitest --pool=threads"
+    "test": "node --max-old-space-size=1024 ./node_modules/vitest/vitest.mjs run --config vitest.config.mjs",
+    "test:watch": "node --max-old-space-size=1024 ./node_modules/vitest/vitest.mjs --config vitest.config.mjs",
+    "test:coverage": "node --max-old-space-size=1024 ./node_modules/vitest/vitest.mjs run --config vitest.coverage.config.mjs --coverage --coverage.provider=istanbul"
   },
   "devDependencies": {
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
+    "@mui/icons-material": "^9.0.0",
+    "@mui/material": "^9.0.0",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.0",
     "@vitejs/plugin-react": "^6.0.1",
-    "@mui/icons-material": "^9.0.0",
-    "@mui/material": "^9.0.0",
+    "@vitest/coverage-istanbul": "^4.1.4",
+    "@vitest/coverage-v8": "^4.1.4",
     "jsdom": "^27.0.1",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",

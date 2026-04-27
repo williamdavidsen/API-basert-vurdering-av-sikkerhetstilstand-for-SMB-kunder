@@ -142,8 +142,9 @@ These values are not valid frontend domain inputs and should be used to verify v
 
 | File | Purpose |
 |---|---|
-| `Test/AssessmentBatchRunner/domains.txt` | Normal public-domain batch validation |
+| `Test/AssessmentBatchRunner/domains.txt` | Normal public-domain batch validation; mirrors the real public-domain list above |
 | `Test/AssessmentBatchRunner/weak-domains.txt` | Optional weak/fake domain validation |
+| `Test/AssessmentBatchRunner/live-smoke-domains.txt` | Small live smoke subset of real public domains for quick production-like validation |
 
 ## Fake Security Profiles
 

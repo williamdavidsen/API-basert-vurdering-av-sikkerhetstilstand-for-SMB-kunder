@@ -89,7 +89,21 @@ export function DomainScanForm({ onSubmitDomain }: DomainScanFormProps) {
 
           {error ? <Alert severity="error">{error}</Alert> : null}
 
-          <Button type="submit" variant="contained" size="large" sx={{ py: 1.2, mt: 0.5 }}>
+          <Button
+            type="submit"
+            variant="contained"
+            size="large"
+            sx={{
+              py: 1.2,
+              mt: 0.5,
+              color: '#ffffff',
+              bgcolor: 'secondary.main',
+              fontWeight: 800,
+              '&:hover': {
+                bgcolor: 'secondary.dark',
+              },
+            }}
+          >
             Run security scan
           </Button>
         </Stack>

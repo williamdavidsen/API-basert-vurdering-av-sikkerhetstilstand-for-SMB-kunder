@@ -28,5 +28,9 @@ export function normalizeDomainInput(value: string): string {
 }
 
 export function isValidDomain(value: string): boolean {
+  if (value.includes('@')) {
+    return false
+  }
+
   return domainPattern.test(normalizeDomainInput(value))
 }

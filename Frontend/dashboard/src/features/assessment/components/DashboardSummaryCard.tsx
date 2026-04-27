@@ -123,7 +123,16 @@ export function DashboardSummaryCard({
             sx={{ width: { xs: '100%', sm: 'auto' }, alignItems: { xs: 'stretch', sm: 'center' } }}
           >
             {extraActions}
-            <Button variant="outlined" color="secondary" onClick={onTestAnother} sx={{ alignSelf: { xs: 'stretch', sm: 'center' } }}>
+            <Button
+              variant="outlined"
+              color="secondary"
+              onClick={onTestAnother}
+              sx={{
+                alignSelf: { xs: 'stretch', sm: 'center' },
+                color: 'secondary.dark',
+                borderColor: 'secondary.main',
+              }}
+            >
               Test another?
             </Button>
           </Stack>

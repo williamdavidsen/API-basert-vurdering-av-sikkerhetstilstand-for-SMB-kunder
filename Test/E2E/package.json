@@ -3,10 +3,14 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "playwright test",
-    "test:headed": "playwright test --headed"
+    "test": "node --max-old-space-size=1024 ./node_modules/@playwright/test/cli.js test --config playwright.config.mjs",
+    "test:headed": "node --max-old-space-size=1024 ./node_modules/@playwright/test/cli.js test --config playwright.config.mjs --headed",
+    "test:update-snapshots": "node --max-old-space-size=1024 ./node_modules/@playwright/test/cli.js test --config playwright.config.mjs --update-snapshots",
+    "test:live": "node --max-old-space-size=1024 ./node_modules/@playwright/test/cli.js test --config playwright.config.mjs tests/live-fullstack-smoke.spec.ts"
   },
   "devDependencies": {
-    "@playwright/test": "^1.57.0"
+    "@axe-core/playwright": "^4.11.2",
+    "@playwright/test": "^1.57.0",
+    "@vitest/coverage-istanbul": "^4.1.4"
   }
 }

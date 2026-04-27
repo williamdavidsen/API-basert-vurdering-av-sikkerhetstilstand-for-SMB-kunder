@@ -246,7 +246,7 @@ export function ModuleCard({
             component={RouterLink}
             to={readMoreTo}
             underline="hover"
-            sx={{ fontWeight: 800, color: 'primary.dark' }}
+            sx={{ fontWeight: 800, color: 'secondary.dark' }}
           >
             {readMoreLabel} →
           </Link>

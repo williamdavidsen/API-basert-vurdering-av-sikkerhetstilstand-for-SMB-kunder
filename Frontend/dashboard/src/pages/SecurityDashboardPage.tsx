@@ -209,7 +209,12 @@ export function SecurityDashboardPage() {
           modules={data.assessment.modules}
           onTestAnother={() => navigate(routes.home)}
           extraActions={
-            <Button variant="text" color="secondary" onClick={handleOpenPqcManual} sx={{ fontWeight: 800 }}>
+            <Button
+              variant="text"
+              color="secondary"
+              onClick={handleOpenPqcManual}
+              sx={{ fontWeight: 800, color: 'secondary.dark' }}
+            >
               Post-quantum insight
             </Button>
           }

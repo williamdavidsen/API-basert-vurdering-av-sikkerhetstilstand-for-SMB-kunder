@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test'
-import assessmentFixture from '../fixtures/assessment-response.json' assert { type: 'json' }
+import assessmentFixture from '../fixtures/assessment-response.json' with { type: 'json' }
 
 test('dashboard renders partial assessment messaging and e-mail error state', async ({ page }) => {
   const partialFixture = structuredClone(assessmentFixture)

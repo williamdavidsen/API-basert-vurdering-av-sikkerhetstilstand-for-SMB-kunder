@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test'
-import assessmentFixture from '../fixtures/assessment-response.json' assert { type: 'json' }
+import assessmentFixture from '../fixtures/assessment-response.json' with { type: 'json' }
 
 test('dashboard route renders with fixture-backed API responses', async ({ page }) => {
   await page.route('**/api/**', async (route) => {
