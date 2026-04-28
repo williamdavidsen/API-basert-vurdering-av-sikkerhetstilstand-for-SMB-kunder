@@ -399,7 +399,7 @@ function PieBreakdownChart({
           dominantBaseline="middle"
           fill={centerPrimaryColor}
           fontWeight="900"
-          fontSize="26"
+          fontSize="29"
         >
           {totalPercent}%
         </text>

@@ -78,7 +78,7 @@ export function dashboardHeadline(grade: string, status: string, score: number):
   if (s === 'WARNING' || g === 'C') {
     return 'Security posture needs attention'
   }
-  return 'Security analysis dashboard'
+  return 'Security Analysis Dashboard'
 }
 
 export function dashboardEmailSubtitle(emailModuleIncluded: boolean, emailStatus: string): string {

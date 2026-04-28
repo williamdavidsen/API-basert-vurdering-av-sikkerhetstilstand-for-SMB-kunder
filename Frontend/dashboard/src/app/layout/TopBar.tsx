@@ -91,8 +91,8 @@ export function TopBar({ title }: TopBarProps) {
             <Typography
               sx={{
                 fontWeight: 800,
-                fontSize: { xs: 13.6, md: 17.1 },
-                letterSpacing: { xs: 0.05, md: 0.1 },
+                fontSize: { xs: 14.6, md: 18.8 },
+                letterSpacing: { xs: 0.06, md: 0.12 },
                 lineHeight: 1.05,
                 whiteSpace: 'nowrap',
                 overflow: 'hidden',
@@ -105,8 +105,8 @@ export function TopBar({ title }: TopBarProps) {
               sx={{
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: { xs: 0.4, md: 0.7 },
-                mt: 0.1,
+                gap: { xs: 0.45, md: 0.78 },
+                mt: 0.12,
                 width: '100%',
                 minWidth: 0,
               }}
@@ -116,15 +116,15 @@ export function TopBar({ title }: TopBarProps) {
                 sx={{
                   flex: 1,
                   height: 1.5,
-                  minWidth: { xs: 10, md: 18 },
+                  minWidth: { xs: 11, md: 20 },
                   bgcolor: 'rgba(255,255,255,0.7)',
                 }}
               />
               <Typography
                 sx={{
                   fontWeight: 700,
-                  fontSize: { xs: 9.4, md: 10.8 },
-                  letterSpacing: { xs: 0.2, md: 0.35 },
+                  fontSize: { xs: 10.1, md: 11.8 },
+                  letterSpacing: { xs: 0.22, md: 0.38 },
                   lineHeight: 1,
                   whiteSpace: 'nowrap',
                 }}
@@ -136,7 +136,7 @@ export function TopBar({ title }: TopBarProps) {
                 sx={{
                   flex: 1,
                   height: 1.5,
-                  minWidth: { xs: 10, md: 18 },
+                  minWidth: { xs: 11, md: 20 },
                   bgcolor: 'rgba(255,255,255,0.7)',
                 }}
               />
@@ -176,6 +176,7 @@ export function TopBar({ title }: TopBarProps) {
                   px: 1.5,
                   py: 0.42,
                   fontWeight: isActive ? 700 : 600,
+                  fontSize: '1.03rem',
                   letterSpacing: isActive ? 0.1 : 0,
                   textShadow: isActive ? '0 1px 1px rgba(0,0,0,0.16)' : 'none',
                   borderRadius: 999,
