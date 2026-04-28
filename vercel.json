@@ -1,0 +1,12 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "installCommand": "npm --prefix Frontend/dashboard install",
+  "buildCommand": "npm --prefix Frontend/dashboard run build",
+  "outputDirectory": "Frontend/dashboard/dist",
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}

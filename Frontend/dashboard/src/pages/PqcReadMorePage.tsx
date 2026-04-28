@@ -76,6 +76,7 @@ export function PqcReadMorePage() {
     pqcState.status === 'ready' && pqcState.pqc.pqcDetected
       ? pqcReadMoreDetectedMock
       : pqcReadMoreNotDetectedMock
+  const readyPqc = pqcState.status === 'ready' ? pqcState.pqc : null
 
   return (
     <Box sx={{ maxWidth: 1040, mx: 'auto', width: '100%' }}>
@@ -117,17 +118,17 @@ export function PqcReadMorePage() {
                     sx={{ alignItems: { xs: 'flex-start', sm: 'center' } }}
                   >
                     <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                      Status: <Box component="span" sx={{ fontWeight: 800, color: 'text.primary' }}>{pqcState.pqc.status}</Box>
+                      Status: <Box component="span" sx={{ fontWeight: 800, color: 'text.primary' }}>{readyPqc?.status}</Box>
                     </Typography>
                     <Chip
                       size="small"
-                      label={pqcState.pqc.readinessLevel}
-                      color={readinessChipColor(pqcState.pqc.readinessLevel)}
-                      variant={readinessChipColor(pqcState.pqc.readinessLevel) === 'default' ? 'outlined' : 'filled'}
+                      label={readyPqc?.readinessLevel}
+                      color={readinessChipColor(readyPqc?.readinessLevel ?? '')}
+                      variant={readinessChipColor(readyPqc?.readinessLevel ?? '') === 'default' ? 'outlined' : 'filled'}
                     />
                   </Stack>
                   <Typography variant="body2" sx={{ color: 'text.primary' }}>
-                    {pqcState.pqc.notes || 'No additional notes were returned for this domain.'}
+                    {readyPqc?.notes || 'No additional notes were returned for this domain.'}
                   </Typography>
                 </Stack>
               </Alert>
