@@ -64,7 +64,7 @@ export function dashboardHeadline(grade: string, status: string, score: number):
   const s = status.trim().toUpperCase()
 
   if (s === 'PARTIAL') {
-    return 'Partial security assessment'
+    return 'Partial Security Assessment'
   }
 
   if (score <= 0 || g === 'F' || (s === 'FAIL' && score < 50)) {

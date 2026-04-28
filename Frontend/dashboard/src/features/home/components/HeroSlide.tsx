@@ -31,11 +31,8 @@ export function HeroSlide({ slide, isActive, reducedMotion }: HeroSlideProps) {
         }}
       >
         <Stack spacing={1.5} sx={{ maxWidth: 420 }}>
-          <Typography variant="overline" sx={{ color: 'secondary.main', fontWeight: 800, letterSpacing: '0.08em' }}>
-            Security overview
-          </Typography>
           <Typography component="h2" variant="h4" sx={{ color: 'secondary.dark', fontWeight: 900, lineHeight: 1.1 }}>
-            {slide.title}
+            {slide.titleParts.map((part) => part.text).join(' ')}
           </Typography>
           <Typography variant="body1" sx={{ color: 'text.secondary', maxWidth: 380 }}>
             {slide.description}
@@ -47,19 +44,85 @@ export function HeroSlide({ slide, isActive, reducedMotion }: HeroSlideProps) {
 
   return (
     <Box
-      component="img"
-      src={slide.imageUrl}
-      alt={slide.imageAlt}
-      onError={() => setHasImageError(true)}
       sx={{
+        position: 'relative',
         width: '100%',
         height: { xs: 250, md: 320 },
-        objectFit: 'cover',
-        objectPosition: { xs: 'left center', sm: 'center' },
-        transform: reducedMotion ? 'none' : isActive ? 'scale(1.02)' : 'scale(1)',
-        transition: reducedMotion ? 'none' : 'transform 420ms ease-out',
-        display: 'block',
+        overflow: 'hidden',
+        bgcolor: '#e9f7fa',
       }}
-    />
+    >
+      <Box
+        component="img"
+        src={slide.imageUrl}
+        alt={slide.imageAlt}
+        onError={() => setHasImageError(true)}
+        sx={{
+          position: 'absolute',
+          inset: 0,
+          width: '100%',
+          height: '100%',
+          objectFit: 'cover',
+          objectPosition: { xs: 'left center', sm: 'center' },
+          transform: reducedMotion ? 'none' : isActive ? 'scale(1.02)' : 'scale(1)',
+          transition: reducedMotion ? 'none' : 'transform 420ms ease-out',
+          display: 'block',
+        }}
+      />
+      <Box
+        sx={{
+          position: 'relative',
+          zIndex: 1,
+          height: '100%',
+          display: 'flex',
+          alignItems: 'center',
+          maxWidth: { xs: '64%', sm: '44%', md: 410 },
+          px: { xs: 2.6, md: 4.8 },
+        }}
+      >
+        <Stack
+          spacing={1.35}
+          sx={{
+            alignItems: 'flex-start',
+            width: '100%',
+            mt: { xs: -1.6, md: -1.2 },
+          }}
+        >
+          <Typography
+            component="h2"
+            sx={{
+              color: '#18425d',
+              fontWeight: 800,
+              fontSize: { xs: '1.57rem', md: '2.44rem' },
+              lineHeight: 1.08,
+              letterSpacing: '-0.03em',
+            }}
+          >
+            {slide.titleParts.map((part) => (
+              <Box
+                key={`${slide.id}-${part.text}`}
+                component="span"
+                sx={{
+                  display: 'block',
+                  color: part.tone === 'accent' ? slide.accentColor : '#18425d',
+                }}
+              >
+                {part.text}
+              </Box>
+            ))}
+          </Typography>
+          <Typography
+            sx={{
+              color: 'rgba(54, 79, 95, 0.9)',
+              fontSize: { xs: '0.99rem', md: '1.21rem' },
+              lineHeight: 1.48,
+              maxWidth: { xs: 208, md: 292 },
+            }}
+          >
+            {slide.description}
+          </Typography>
+        </Stack>
+      </Box>
+    </Box>
   )
 }

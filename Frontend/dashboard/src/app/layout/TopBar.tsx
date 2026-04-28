@@ -173,14 +173,16 @@ export function TopBar({ title }: TopBarProps) {
                 to={item.to}
                 sx={{
                   color: 'primary.contrastText',
-                  px: 1.35,
+                  px: 1.5,
                   py: 0.42,
-                  fontWeight: isActive ? 800 : 600,
+                  fontWeight: isActive ? 700 : 600,
+                  letterSpacing: isActive ? 0.1 : 0,
+                  textShadow: isActive ? '0 1px 1px rgba(0,0,0,0.16)' : 'none',
                   borderRadius: 999,
                   minWidth: 'auto',
-                  bgcolor: isActive ? 'rgba(255,255,255,0.34)' : 'transparent',
-                  boxShadow: isActive ? 'inset 0 0 0 1px rgba(255,255,255,0.44)' : 'none',
-                  '&:hover': { bgcolor: isActive ? 'rgba(255,255,255,0.39)' : 'rgba(255,255,255,0.16)' },
+                  bgcolor: isActive ? 'rgba(255,255,255,0.28)' : 'transparent',
+                  boxShadow: isActive ? 'inset 0 0 0 1px rgba(255,255,255,0.52)' : 'none',
+                  '&:hover': { bgcolor: isActive ? 'rgba(255,255,255,0.33)' : 'rgba(255,255,255,0.16)' },
                 }}
               >
                 {item.label}
