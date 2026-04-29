@@ -3,6 +3,7 @@ $ErrorActionPreference = 'Stop'
 $repoRoot = Resolve-Path $PSScriptRoot
 $apiBaseUrl = 'http://localhost:1071'
 $ownedApiProcess = $null
+$powershellExe = (Get-Command powershell -ErrorAction Stop).Source
 
 function Invoke-Step {
     param(
@@ -161,7 +162,7 @@ try {
         }
 
         Invoke-CheckedCommand {
-            pwsh -File (Join-Path $repoRoot 'Test\AssessmentBatchRunner\run-live-validation.ps1') $apiBaseUrl (Join-Path $repoRoot 'Test\AssessmentBatchRunner\live-smoke-domains.txt')
+            & $powershellExe -ExecutionPolicy Bypass -File (Join-Path $repoRoot 'Test\AssessmentBatchRunner\run-live-validation.ps1') $apiBaseUrl (Join-Path $repoRoot 'Test\AssessmentBatchRunner\live-smoke-domains.txt')
         }
     }
 
@@ -171,7 +172,7 @@ try {
         }
 
         Invoke-CheckedCommand {
-            pwsh -File (Join-Path $repoRoot 'Test\NonFunctional\load-smoke.ps1') -ApiBaseUrl $apiBaseUrl
+            & $powershellExe -ExecutionPolicy Bypass -File (Join-Path $repoRoot 'Test\NonFunctional\load-smoke.ps1') -ApiBaseUrl $apiBaseUrl
         }
     }
 
@@ -181,7 +182,7 @@ try {
         }
 
         Invoke-CheckedCommand {
-            pwsh -File (Join-Path $repoRoot 'Test\NonFunctional\resilience-smoke.ps1') -ApiBaseUrl $apiBaseUrl
+            & $powershellExe -ExecutionPolicy Bypass -File (Join-Path $repoRoot 'Test\NonFunctional\resilience-smoke.ps1') -ApiBaseUrl $apiBaseUrl
         }
     }
 

@@ -189,15 +189,15 @@ export function DashboardSummaryCard({
               minWidth: { md: 0 },
               width: '100%',
               maxWidth: 760,
-              ml: { md: 'auto' },
+              ml: { xs: 0, md: 'auto' },
               display: 'flex',
-              justifyContent: 'flex-end',
+              justifyContent: { xs: 'center', md: 'flex-end' },
             }}
           >
-            <Stack spacing={1.25} sx={{ alignItems: 'flex-end', width: '100%', maxWidth: 640 }}>
-              <Stack spacing={1.25} sx={{ width: '100%', maxWidth: 560, alignItems: 'flex-end' }}>
-                <Stack spacing={1.25} sx={{ width: '100%', alignItems: 'flex-end' }}>
-                  <Box sx={{ display: 'flex', justifyContent: 'flex-end', width: '100%' }}>
+            <Stack spacing={1.25} sx={{ alignItems: { xs: 'center', md: 'flex-end' }, width: '100%', maxWidth: 640 }}>
+              <Stack spacing={1.25} sx={{ width: '100%', maxWidth: 560, alignItems: { xs: 'center', md: 'flex-end' } }}>
+                <Stack spacing={1.25} sx={{ width: '100%', alignItems: { xs: 'center', md: 'flex-end' } }}>
+                  <Box sx={{ display: 'flex', justifyContent: { xs: 'center', md: 'flex-end' }, width: '100%' }}>
                     <Box
                       sx={{
                         display: 'grid',
