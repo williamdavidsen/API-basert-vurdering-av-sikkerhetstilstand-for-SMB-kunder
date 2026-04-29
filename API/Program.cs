@@ -5,7 +5,7 @@ using SecurityAssessmentAPI.DAL.Repositories;
 using SecurityAssessmentAPI.Services;
 
 var builder = WebApplication.CreateBuilder(args);
-builder.Configuration.AddJsonFile("appsettings.Local.json", optional: true, reloadOnChange: true);
+AddLocalConfiguration(builder);
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
@@ -73,6 +73,22 @@ app.MapGet("/", () => Results.Ok(new
 }));
 
 app.MapControllers();
+
+void AddLocalConfiguration(WebApplicationBuilder webApplicationBuilder)
+{
+    var localSettingsFileName = "appsettings.Local.json";
+    var candidatePaths = new[]
+    {
+        Path.Combine(webApplicationBuilder.Environment.ContentRootPath, localSettingsFileName),
+        Path.Combine(webApplicationBuilder.Environment.ContentRootPath, "API", localSettingsFileName)
+    };
+
+    var localSettingsPath = candidatePaths.FirstOrDefault(File.Exists);
+    if (!string.IsNullOrWhiteSpace(localSettingsPath))
+    {
+        webApplicationBuilder.Configuration.AddJsonFile(localSettingsPath, optional: true, reloadOnChange: true);
+    }
+}
 
 app.Run();
 
