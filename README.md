@@ -92,6 +92,22 @@ Or use the npm shortcut from the repository root:
 npm run test:all
 ```
 
+The combined suite covers:
+
+- backend unit tests
+- backend integration tests
+- frontend unit tests
+- Playwright E2E tests
+- live batch validation in `Test/AssessmentBatchRunner`
+- non-functional smoke checks in `Test/NonFunctional`
+
+The following `Test` subfolders are documentation/manual assets and are not runnable by `npm run test:all`:
+
+- `Test/ManualTests`
+- `Test/Reports`
+- `Test/TestDesign`
+- `Test/TestPlan`
+
 ## Notes
 
 - The project depends on external services and network-based checks.

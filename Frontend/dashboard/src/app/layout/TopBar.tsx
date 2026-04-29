@@ -73,12 +73,22 @@ export function TopBar({ title }: TopBarProps) {
             mr: { xs: 1, md: 2.5 },
             display: 'inline-flex',
             alignItems: 'center',
-            gap: 1,
+            gap: { xs: 1.1, md: 1.35 },
             minWidth: 0,
           }}
           aria-label="Go to home page"
         >
-          <Box component="img" src={siteLogo} alt="" aria-hidden sx={{ width: 24, height: 24 }} />
+          <Box
+            component="img"
+            src={siteLogo}
+            alt=""
+            aria-hidden
+            sx={{
+              width: { xs: 30, md: 36 },
+              height: { xs: 30, md: 36 },
+              flexShrink: 0,
+            }}
+          />
           <Box
             sx={{
               display: 'inline-flex',

@@ -1,5 +1,3 @@
-$ErrorActionPreference = 'Stop'
-
 param(
   [string]$ApiBaseUrl = 'http://localhost:1071',
   [string]$Domain = 'example.com',
@@ -10,57 +8,55 @@ param(
   [int]$MaxP95Ms = 5000
 )
 
-$handler = [System.Net.Http.SocketsHttpHandler]::new()
-$handler.PooledConnectionLifetime = [TimeSpan]::FromMinutes(2)
-$client = [System.Net.Http.HttpClient]::new($handler)
-$client.BaseAddress = [Uri]($ApiBaseUrl.TrimEnd('/') + '/')
-$client.Timeout = [TimeSpan]::FromSeconds($TimeoutSeconds)
+$ErrorActionPreference = 'Stop'
+Add-Type -AssemblyName System.Net.Http
 
-$batches = [Math]::Ceiling($Requests / [double]$Concurrency)
+$apiBaseUrlNormalized = $ApiBaseUrl.TrimEnd('/') + '/'
+
+$results = 1..$Requests | ForEach-Object -Parallel {
+  Add-Type -AssemblyName System.Net.Http
+
+  $handler = [System.Net.Http.HttpClientHandler]::new()
+  $client = [System.Net.Http.HttpClient]::new($handler)
+  $client.BaseAddress = [Uri]$using:apiBaseUrlNormalized
+  $client.Timeout = [TimeSpan]::FromSeconds($using:TimeoutSeconds)
+
+  $stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
+  try {
+    $payload = @{ domain = $using:Domain } | ConvertTo-Json
+    $content = [System.Net.Http.StringContent]::new($payload, [System.Text.Encoding]::UTF8, 'application/json')
+    $response = $client.PostAsync('api/assessment/check', $content).GetAwaiter().GetResult()
+    $body = $response.Content.ReadAsStringAsync().GetAwaiter().GetResult()
+    $stopwatch.Stop()
+
+    [pscustomobject]@{
+      StatusCode = [int]$response.StatusCode
+      Success = $response.IsSuccessStatusCode
+      DurationMs = $stopwatch.Elapsed.TotalMilliseconds
+      Body = $body
+    }
+  }
+  catch {
+    $stopwatch.Stop()
+    [pscustomobject]@{
+      StatusCode = 0
+      Success = $false
+      DurationMs = $stopwatch.Elapsed.TotalMilliseconds
+      Body = $_.Exception.Message
+    }
+  }
+  finally {
+    $client.Dispose()
+    $handler.Dispose()
+  }
+} -ThrottleLimit $Concurrency
+
 $durations = New-Object System.Collections.Generic.List[double]
 $failures = 0
-
-for ($batch = 0; $batch -lt $batches; $batch++) {
-  $tasks = @()
-
-  for ($i = 0; $i -lt $Concurrency; $i++) {
-    $requestIndex = ($batch * $Concurrency) + $i
-    if ($requestIndex -ge $Requests) { break }
-
-    $tasks += [System.Threading.Tasks.Task[object]]::Run([Func[object]]{
-      $stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
-      try {
-        $payload = @{ domain = $Domain } | ConvertTo-Json
-        $content = [System.Net.Http.StringContent]::new($payload, [System.Text.Encoding]::UTF8, 'application/json')
-        $response = $client.PostAsync('api/assessment/check', $content).GetAwaiter().GetResult()
-        $body = $response.Content.ReadAsStringAsync().GetAwaiter().GetResult()
-        $stopwatch.Stop()
-
-        [pscustomobject]@{
-          StatusCode = [int]$response.StatusCode
-          Success = $response.IsSuccessStatusCode
-          DurationMs = $stopwatch.Elapsed.TotalMilliseconds
-          Body = $body
-        }
-      }
-      catch {
-        $stopwatch.Stop()
-        [pscustomobject]@{
-          StatusCode = 0
-          Success = $false
-          DurationMs = $stopwatch.Elapsed.TotalMilliseconds
-          Body = $_.Exception.Message
-        }
-      }
-    })
-  }
-
-  $results = [System.Threading.Tasks.Task]::WhenAll($tasks).GetAwaiter().GetResult()
-  foreach ($result in $results) {
-    $durations.Add($result.DurationMs)
-    if (-not $result.Success) {
-      $failures++
-    }
+foreach ($result in $results) {
+  $durations.Add($result.DurationMs)
+  if (-not $result.Success) {
+    $failures++
   }
 }
 

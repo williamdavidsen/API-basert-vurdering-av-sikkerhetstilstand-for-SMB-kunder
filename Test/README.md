@@ -10,10 +10,10 @@ This folder is the testing workspace for the security assessment system. It is o
 - `API.IntegrationTests`: API endpoint tests using an in-memory test server.
 - `Frontend.UnitTests`: Vitest tests for frontend utility and mapping logic.
 - `E2E`: Playwright tests for user flows through the dashboard, accessibility smoke, visual regression, and an opt-in live full-stack smoke flow.
-- `ManualTests`: exploratory and checklist-based manual testing.
-- `Reports`: test execution summaries, coverage notes, and defect log.
-- `AssessmentBatchRunner`: optional batch evaluation tool for running many domains.
-- `NonFunctional`: lightweight load and resilience smoke helpers.
+- `ManualTests`: exploratory and checklist-based manual testing documentation.
+- `Reports`: test execution summaries, coverage notes, and defect log documentation.
+- `AssessmentBatchRunner`: live API smoke validation against a small domain batch.
+- `NonFunctional`: automated load and resilience smoke helpers against the running API.
 
 ## Recommended Commands
 
@@ -21,7 +21,7 @@ Quick summary:
 
 - `npm run dev` is for running the frontend application, not for running tests.
 - Frontend app setup is `cd .\Frontend`, then `npm run setup`, then `npm run dev`.
-- Use `npm run test:all` from the repository root to run the main automated test suite.
+- Use `npm run test:all` from the repository root or from `Test` to run the full automated suite, including live batch validation and non-functional smoke checks.
 
 From the repository root:
 
@@ -54,7 +54,7 @@ cd .\Test\Frontend.UnitTests
 npm run test:coverage
 ```
 
-Run the main automated suite in one step from the repository root:
+Run the full automated regression suite in one step from the repository root:
 
 ```powershell
 .\run-tests.ps1
@@ -65,6 +65,29 @@ Or:
 ```powershell
 npm run test:all
 ```
+
+From `.\Test`:
+
+```powershell
+npm run test:all
+```
+
+What `test:all` includes:
+
+- API unit tests
+- API integration tests
+- Frontend unit tests
+- E2E Playwright tests
+- `AssessmentBatchRunner` live smoke validation
+- `NonFunctional/load-smoke.ps1`
+- `NonFunctional/resilience-smoke.ps1`
+
+What `test:all` does not include:
+
+- `ManualTests` because these are manual checklists and exploratory charters
+- `Reports` because these are generated/project documentation files
+- `TestDesign` because these are written test-case documents
+- `TestPlan` because these are planning and traceability documents
 
 Live validation helpers:
 

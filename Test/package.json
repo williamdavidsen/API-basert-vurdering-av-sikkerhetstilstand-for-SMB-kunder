@@ -1,0 +1,7 @@
+{
+  "name": "security-assessment-test-workspace",
+  "private": true,
+  "scripts": {
+    "test:all": "powershell -ExecutionPolicy Bypass -File ..\\run-tests.ps1"
+  }
+}

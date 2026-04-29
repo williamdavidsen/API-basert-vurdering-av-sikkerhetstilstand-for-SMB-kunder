@@ -1,5 +1,9 @@
 $ErrorActionPreference = 'Stop'
 
+$repoRoot = Resolve-Path $PSScriptRoot
+$apiBaseUrl = 'http://localhost:1071'
+$ownedApiProcess = $null
+
 function Invoke-Step {
     param(
         [Parameter(Mandatory = $true)]
@@ -25,33 +29,165 @@ function Invoke-CheckedCommand {
     }
 }
 
-$env:DOTNET_CLI_HOME = Join-Path (Get-Location) '.dotnet-cli-home'
-$env:DOTNET_SKIP_FIRST_TIME_EXPERIENCE = '1'
-$env:DOTNET_CLI_TELEMETRY_OPTOUT = '1'
+function Test-ApiAvailable {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string] $Url
+    )
 
-Invoke-Step -Name "API unit tests" -Action {
-    Invoke-CheckedCommand {
-        dotnet test .\Test\API.UnitTests\API.UnitTests.csproj -m:1 -p:UseAppHost=false --artifacts-path .\artifacts\test-run\api-unit
-    }
-}
-
-Invoke-Step -Name "API integration tests" -Action {
-    Invoke-CheckedCommand {
-        dotnet test .\Test\API.IntegrationTests\API.IntegrationTests.csproj -m:1 -p:UseAppHost=false --artifacts-path .\artifacts\test-run\api-integration
-    }
-}
-
-Invoke-Step -Name "Frontend unit tests" -Action {
-    Push-Location .\Test\Frontend.UnitTests
     try {
+        $response = Invoke-RestMethod -Uri $Url -Method Get -TimeoutSec 5
+        return $response.message -eq 'SecurityAssessment API is running'
+    }
+    catch {
+        return $false
+    }
+}
+
+function Wait-ApiAvailable {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string] $Url,
+        [int] $TimeoutSeconds = 120
+    )
+
+    $deadline = (Get-Date).AddSeconds($TimeoutSeconds)
+    while ((Get-Date) -lt $deadline) {
+        if (Test-ApiAvailable -Url $Url) {
+            return
+        }
+        Start-Sleep -Seconds 2
+    }
+
+    throw "Timed out waiting for API at $Url"
+}
+
+function Ensure-LocalApi {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string] $Url
+    )
+
+    if (Test-ApiAvailable -Url $Url) {
+        return $null
+    }
+
+    $apiProject = Join-Path $repoRoot 'API\SecurityAssessmentAPI.csproj'
+    $apiWorkingDirectory = Join-Path $repoRoot 'API'
+    $logDirectory = Join-Path $repoRoot 'artifacts\test-run\live-api'
+    New-Item -ItemType Directory -Force -Path $logDirectory | Out-Null
+
+    $stdoutLog = Join-Path $logDirectory 'stdout.log'
+    $stderrLog = Join-Path $logDirectory 'stderr.log'
+
+    $process = Start-Process dotnet `
+        -ArgumentList @('run', '--project', $apiProject, '--launch-profile', 'http', '--no-build') `
+        -WorkingDirectory $apiWorkingDirectory `
+        -RedirectStandardOutput $stdoutLog `
+        -RedirectStandardError $stderrLog `
+        -PassThru `
+        -WindowStyle Hidden
+
+    try {
+        Wait-ApiAvailable -Url $Url
+        return $process
+    }
+    catch {
+        if (-not $process.HasExited) {
+            Stop-Process -Id $process.Id -Force
+        }
+        throw
+    }
+}
+
+function Stop-OwnedApi {
+    param(
+        [System.Diagnostics.Process] $Process
+    )
+
+    if ($null -eq $Process) {
+        return
+    }
+
+    if (-not $Process.HasExited) {
+        Stop-Process -Id $Process.Id -Force
+    }
+}
+
+try {
+    $env:DOTNET_CLI_HOME = Join-Path $repoRoot '.dotnet-cli-home'
+    $env:DOTNET_SKIP_FIRST_TIME_EXPERIENCE = '1'
+    $env:DOTNET_CLI_TELEMETRY_OPTOUT = '1'
+
+    Invoke-Step -Name "API unit tests" -Action {
         Invoke-CheckedCommand {
-            npm test
+            dotnet test (Join-Path $repoRoot 'Test\API.UnitTests\API.UnitTests.csproj') -m:1 -p:UseAppHost=false --artifacts-path (Join-Path $repoRoot 'artifacts\test-run\api-unit')
         }
     }
-    finally {
-        Pop-Location
-    }
-}
 
-Write-Host ""
-Write-Host "All automated tests completed successfully." -ForegroundColor Green
+    Invoke-Step -Name "API integration tests" -Action {
+        Invoke-CheckedCommand {
+            dotnet test (Join-Path $repoRoot 'Test\API.IntegrationTests\API.IntegrationTests.csproj') -m:1 -p:UseAppHost=false --artifacts-path (Join-Path $repoRoot 'artifacts\test-run\api-integration')
+        }
+    }
+
+    Invoke-Step -Name "Frontend unit tests" -Action {
+        Push-Location (Join-Path $repoRoot 'Test\Frontend.UnitTests')
+        try {
+            Invoke-CheckedCommand {
+                npm test
+            }
+        }
+        finally {
+            Pop-Location
+        }
+    }
+
+    Invoke-Step -Name "E2E tests" -Action {
+        Push-Location (Join-Path $repoRoot 'Test\E2E')
+        try {
+            Invoke-CheckedCommand {
+                npm test
+            }
+        }
+        finally {
+            Pop-Location
+        }
+    }
+
+    Invoke-Step -Name "Live batch validation" -Action {
+        if ($null -eq $ownedApiProcess) {
+            $ownedApiProcess = Ensure-LocalApi -Url $apiBaseUrl
+        }
+
+        Invoke-CheckedCommand {
+            pwsh -File (Join-Path $repoRoot 'Test\AssessmentBatchRunner\run-live-validation.ps1') $apiBaseUrl (Join-Path $repoRoot 'Test\AssessmentBatchRunner\live-smoke-domains.txt')
+        }
+    }
+
+    Invoke-Step -Name "Non-functional load smoke" -Action {
+        if ($null -eq $ownedApiProcess) {
+            $ownedApiProcess = Ensure-LocalApi -Url $apiBaseUrl
+        }
+
+        Invoke-CheckedCommand {
+            pwsh -File (Join-Path $repoRoot 'Test\NonFunctional\load-smoke.ps1') -ApiBaseUrl $apiBaseUrl
+        }
+    }
+
+    Invoke-Step -Name "Non-functional resilience smoke" -Action {
+        if ($null -eq $ownedApiProcess) {
+            $ownedApiProcess = Ensure-LocalApi -Url $apiBaseUrl
+        }
+
+        Invoke-CheckedCommand {
+            pwsh -File (Join-Path $repoRoot 'Test\NonFunctional\resilience-smoke.ps1') -ApiBaseUrl $apiBaseUrl
+        }
+    }
+
+    Write-Host ""
+    Write-Host "All automated tests completed successfully." -ForegroundColor Green
+}
+finally {
+    Stop-OwnedApi -Process $ownedApiProcess
+}

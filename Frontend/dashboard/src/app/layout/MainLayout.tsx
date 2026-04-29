@@ -1,6 +1,6 @@
 import Box from '@mui/material/Box'
 import { Outlet, useLocation } from 'react-router-dom'
-import homeBackground from '../../assets/images/home/background.webp'
+import homeBackground from '../../assets/images/home/background.png'
 import { routes } from '../../shared/constants/routes'
 import { Footer } from './Footer'
 import { SideNav } from './SideNav'
@@ -17,7 +17,6 @@ function resolveTitle(pathname: string) {
 
 export function MainLayout() {
   const location = useLocation()
-  const isHomePage = location.pathname === routes.home
   const isThreatPage = location.pathname.startsWith(routes.threatLandscape)
 
   return (
@@ -51,14 +50,10 @@ export function MainLayout() {
             flex: 1,
             p: { xs: 1.5, sm: 2.5, md: 4 },
             minWidth: 0,
-            ...(isHomePage
-              ? {
-                  backgroundImage: `linear-gradient(rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.93)), url(${homeBackground})`,
-                  backgroundSize: 'cover',
-                  backgroundPosition: 'center',
-                  backgroundRepeat: 'no-repeat',
-                }
-              : null),
+            backgroundImage: `url(${homeBackground})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            backgroundRepeat: 'no-repeat',
           }}
         >
           <Outlet />

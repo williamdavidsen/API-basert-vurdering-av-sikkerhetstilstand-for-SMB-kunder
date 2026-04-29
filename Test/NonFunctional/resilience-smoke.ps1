@@ -1,5 +1,3 @@
-$ErrorActionPreference = 'Stop'
-
 param(
   [string]$ApiBaseUrl = 'http://localhost:1071',
   [string]$MixedDomainFile = (Join-Path $PSScriptRoot '..\AssessmentBatchRunner\live-smoke-domains.txt'),
@@ -7,11 +5,14 @@ param(
   [int]$TimeoutSeconds = 30
 )
 
+$ErrorActionPreference = 'Stop'
+Add-Type -AssemblyName System.Net.Http
+
 $realDomains = Get-Content $MixedDomainFile | Where-Object { $_ -and -not $_.StartsWith('#') }
 $fakeDomains = Get-Content $FakeDomainFile | Where-Object { $_ -and -not $_.StartsWith('#') } | Select-Object -First 5
 $domains = @($realDomains + $fakeDomains)
 
-$handler = [System.Net.Http.SocketsHttpHandler]::new()
+$handler = [System.Net.Http.HttpClientHandler]::new()
 $client = [System.Net.Http.HttpClient]::new($handler)
 $client.BaseAddress = [Uri]($ApiBaseUrl.TrimEnd('/') + '/')
 $client.Timeout = [TimeSpan]::FromSeconds($TimeoutSeconds)

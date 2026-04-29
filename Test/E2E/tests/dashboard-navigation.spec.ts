@@ -25,6 +25,6 @@ test('dashboard route renders with fixture-backed API responses', async ({ page 
 
   await page.goto('/dashboard?domain=example.com')
 
-  await expect(page.getByText('example.com')).toBeVisible()
-  await expect(page.getByText(/security analysis dashboard/i)).toBeVisible()
+  await expect(page.getByRole('heading', { level: 2, name: 'example.com' })).toBeVisible()
+  await expect(page.getByRole('heading', { level: 2, name: /security analysis dashboard/i })).toBeVisible()
 })

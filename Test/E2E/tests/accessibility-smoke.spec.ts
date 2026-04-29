@@ -65,7 +65,7 @@ test.describe('accessibility smoke', () => {
     await page.goto('/dashboard?domain=example.com')
 
     await expect(page.getByRole('heading', { level: 2, name: /security analysis dashboard/i })).toBeVisible()
-    await expect(page.getByRole('button', { name: /post-quantum insight/i })).toBeVisible()
+    await expect(page.getByRole('heading', { level: 3, name: /post-quantum readiness/i })).toBeVisible()
     await expect(page.getByRole('link', { name: /read more/i }).first()).toBeVisible()
 
     await page.getByRole('link', { name: /read more/i }).first().click()
