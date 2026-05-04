@@ -1,5 +1,5 @@
 param(
-  [string]$ApiBaseUrl = 'http://localhost:1071',
+  [string]$ApiBaseUrl = 'http://localhost:1072',
   [string]$MixedDomainFile = (Join-Path $PSScriptRoot '..\AssessmentBatchRunner\live-smoke-domains.txt'),
   [string]$FakeDomainFile = (Join-Path $PSScriptRoot '..\AssessmentBatchRunner\weak-domains.txt'),
   [int]$TimeoutSeconds = 30

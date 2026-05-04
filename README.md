@@ -48,7 +48,7 @@ Quick summary:
 
 - Start the API from `API`.
 - Run `npm run setup` once in `Frontend`, then start the dashboard with `npm run dev`.
-- Running `npm run dev` inside `Frontend` starts the frontend system at `http://localhost:5173/`.
+- Running `npm run dev` inside `Frontend` starts the frontend system at `http://localhost:5187/`.
 - Run the full automated suite with `npm run test:all` from either the repository root or `Test`.
 
 From the `API` folder:
@@ -60,13 +60,13 @@ dotnet run --project .\SecurityAssessmentAPI.csproj --launch-profile http
 Swagger UI:
 
 ```text
-http://localhost:1071/swagger
+http://localhost:1072/swagger
 ```
 
 OpenAPI JSON:
 
 ```text
-http://localhost:1071/swagger/v1/swagger.json
+http://localhost:1072/swagger/v1/swagger.json
 ```
 
 From the `Frontend` folder, install the dashboard dependencies once and then start the dashboard:
@@ -77,9 +77,9 @@ npm run setup
 npm run dev
 ```
 
-This starts the dashboard dev server, usually on `http://localhost:5173`.
+This starts the dashboard dev server on `http://localhost:5187`.
 
-With the API running, the frontend proxies `/api` requests to `http://localhost:1071` in dev. You can override the target with `VITE_DEV_API_PROXY` in `Frontend/dashboard/.env.development`.
+With the API running, the frontend proxies `/api` requests to `http://localhost:1072` in dev. You can override the target with `VITE_DEV_API_PROXY` in `Frontend/dashboard/.env.development`.
 
 If you want to work directly inside the dashboard app instead:
 

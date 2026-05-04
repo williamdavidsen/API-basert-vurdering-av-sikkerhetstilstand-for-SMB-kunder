@@ -19,8 +19,8 @@ What this does:
 - The `Frontend/package.json` `dev` script forwards to `Frontend/dashboard`
 - The `Frontend/package.json` `setup` script installs dependencies in `Frontend/dashboard`
 - Vite starts the frontend development server
-- The app usually opens on `http://localhost:5173`
-- In development, `/api` is proxied to the backend at `http://localhost:1071`
+- The app opens on `http://localhost:5187`
+- In development, `/api` is proxied to the backend at `http://localhost:1072`
 
 If you want to work directly inside the dashboard app:
 

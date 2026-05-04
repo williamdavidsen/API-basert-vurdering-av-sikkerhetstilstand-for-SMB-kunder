@@ -1,5 +1,5 @@
 param(
-  [string]$ApiBaseUrl = 'http://localhost:1071',
+  [string]$ApiBaseUrl = 'http://localhost:1072',
   [string]$Domain = 'example.com',
   [int]$Requests = 24,
   [int]$Concurrency = 6,

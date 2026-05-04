@@ -8,7 +8,8 @@ const scriptDir = path.dirname(fileURLToPath(import.meta.url))
 const dashboardRoot = path.resolve(scriptDir, '..')
 const repoRoot = path.resolve(dashboardRoot, '..', '..')
 const apiProject = path.join(repoRoot, 'API', 'SecurityAssessmentAPI.csproj')
-const apiPort = 1071
+const apiPort = 1072
+const frontendPort = 5187
 const viteCli = path.join(
   dashboardRoot,
   'node_modules',
@@ -110,7 +111,17 @@ if (!existsSync(viteCli)) {
 if (await isPortOpen(apiPort)) {
   console.log(`[api] http://localhost:${apiPort} is already running; reusing it.`)
 } else {
-  startProcess('api', 'dotnet', ['run', '--project', apiProject, '--launch-profile', 'http'], repoRoot)
+  startProcess(
+    'api',
+    'dotnet',
+    ['run', '--project', apiProject, '--launch-profile', 'http', '--', '--urls', `http://localhost:${apiPort}`],
+    repoRoot,
+  )
 }
 
-startProcess('frontend', process.execPath, [viteCli, '--config', 'vite.config.mjs'], dashboardRoot)
+startProcess(
+  'frontend',
+  process.execPath,
+  [viteCli, '--config', 'vite.config.mjs', '--host', '127.0.0.1', '--port', String(frontendPort), '--strictPort'],
+  dashboardRoot,
+)

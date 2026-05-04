@@ -36,14 +36,16 @@ export async function fetchAssessmentDashboardBundle(
   signal?: AbortSignal,
 ): Promise<AssessmentDashboardBundle> {
   const encoded = encodeDomain(domain)
-  const assessment = await fetchJson<AssessmentCheckResult>(apiUrl(`/api/assessment/check/${encoded}`), { signal })
-
-  const [sslResult, headersResult, emailResult, reputationResult] = await Promise.allSettled([
+  const assessmentPromise = fetchJson<AssessmentCheckResult>(apiUrl(`/api/assessment/check/${encoded}`), { signal })
+  const detailResultsPromise = Promise.allSettled([
     fetchJson<SslCheckResult>(apiUrl(`/api/ssl/check/${encoded}`), { signal }),
     fetchJson<HeadersCheckResult>(apiUrl(`/api/headers/check/${encoded}`), { signal }),
     fetchJson<EmailCheckResult>(apiUrl(`/api/email/check/${encoded}`), { signal }),
     fetchJson<ReputationCheckResult>(apiUrl(`/api/reputation/check/${encoded}`), { signal }),
   ])
+
+  const assessment = await assessmentPromise
+  const [sslResult, headersResult, emailResult, reputationResult] = await detailResultsPromise
 
   return {
     assessment,
