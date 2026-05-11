@@ -57,6 +57,7 @@ export function HeroSlide({ slide, isActive, reducedMotion }: HeroSlideProps) {
         src={slide.imageUrl}
         alt={slide.imageAlt}
         onError={() => setHasImageError(true)}
+        loading="lazy"
         sx={{
           position: 'absolute',
           inset: 0,
@@ -67,6 +68,7 @@ export function HeroSlide({ slide, isActive, reducedMotion }: HeroSlideProps) {
           transform: reducedMotion ? 'none' : isActive ? 'scale(1.02)' : 'scale(1)',
           transition: reducedMotion ? 'none' : 'transform 420ms ease-out',
           display: 'block',
+          willChange: isActive ? 'transform' : 'auto',
         }}
       />
       <Box

@@ -53,11 +53,10 @@ export function DomainScanForm({ onSubmitDomain }: DomainScanFormProps) {
       sx={{
         p: { xs: 2.5, md: 4 },
         borderRadius: '16px',
-        bgcolor: 'rgba(255, 255, 255, 0.86)',
-        backdropFilter: 'blur(8px)',
-        WebkitBackdropFilter: 'blur(8px)',
+        bgcolor: 'rgba(255, 255, 255, 0.92)',
         boxShadow: '0 8px 30px rgba(0, 0, 0, 0.08)',
         borderColor: 'rgba(255, 255, 255, 0.6)',
+        contain: 'layout style paint',
       }}
       aria-labelledby="scan-form-title"
     >

@@ -53,10 +53,10 @@ export function HomeCarousel() {
           onClick={handleBack}
           aria-label="Show previous slide"
           sx={{
-            display: { xs: 'none', md: 'inline-flex' },
-            width: SIDE_COLUMN_WIDTH,
-            minWidth: SIDE_COLUMN_WIDTH,
-            maxWidth: SIDE_COLUMN_WIDTH,
+            display: 'inline-flex',
+            width: { xs: 40, md: SIDE_COLUMN_WIDTH },
+            minWidth: { xs: 40, md: SIDE_COLUMN_WIDTH },
+            maxWidth: { xs: 40, md: SIDE_COLUMN_WIDTH },
             flex: `0 0 ${SIDE_COLUMN_WIDTH}px`,
             justifyContent: 'center',
             px: 0,
@@ -66,7 +66,7 @@ export function HomeCarousel() {
             '&:hover': { bgcolor: 'rgba(128, 222, 234, 0.85)' },
           }}
         >
-          <ArrowBackIosNewRounded sx={{ fontSize: 22, fontWeight: 700 }} />
+          <ArrowBackIosNewRounded sx={{ fontSize: { xs: 18, md: 22 }, fontWeight: 700 }} />
         </Button>
         <Box sx={{ flex: 1 }}>
           <Fade in key={homeSlides[activeStep].id} timeout={reducedMotion ? 0 : 420}>
@@ -79,10 +79,10 @@ export function HomeCarousel() {
           onClick={handleNext}
           aria-label="Show next slide"
           sx={{
-            display: { xs: 'none', md: 'inline-flex' },
-            width: SIDE_COLUMN_WIDTH,
-            minWidth: SIDE_COLUMN_WIDTH,
-            maxWidth: SIDE_COLUMN_WIDTH,
+            display: 'inline-flex',
+            width: { xs: 40, md: SIDE_COLUMN_WIDTH },
+            minWidth: { xs: 40, md: SIDE_COLUMN_WIDTH },
+            maxWidth: { xs: 40, md: SIDE_COLUMN_WIDTH },
             flex: `0 0 ${SIDE_COLUMN_WIDTH}px`,
             justifyContent: 'center',
             px: 0,
@@ -92,7 +92,7 @@ export function HomeCarousel() {
             '&:hover': { bgcolor: 'rgba(128, 222, 234, 0.85)' },
           }}
         >
-          <ArrowForwardIosRounded sx={{ fontSize: 22, fontWeight: 700 }} />
+          <ArrowForwardIosRounded sx={{ fontSize: { xs: 18, md: 22 }, fontWeight: 700 }} />
         </Button>
         <MobileStepper
           variant="dots"

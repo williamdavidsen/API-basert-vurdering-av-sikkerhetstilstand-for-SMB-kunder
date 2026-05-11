@@ -7,6 +7,23 @@ export default defineConfig(({ mode }) => {
 
   return {
     plugins: [react()],
+    build: {
+      target: 'esnext',
+      minify: 'terser',
+      terserOptions: {
+        compress: {
+          drop_console: true,
+        },
+      },
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            'mui-core': ['@mui/material'],
+            'mui-icons': ['@mui/icons-material'],
+          },
+        },
+      },
+    },
     server: {
       host: '127.0.0.1',
       port: 5187,

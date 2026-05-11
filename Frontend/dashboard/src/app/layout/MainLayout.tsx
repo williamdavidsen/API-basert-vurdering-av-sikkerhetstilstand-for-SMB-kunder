@@ -1,6 +1,6 @@
 import Box from '@mui/material/Box'
 import { Outlet, useLocation } from 'react-router-dom'
-import homeBackground from '../../assets/images/home/background.png'
+import homeBackground from '../../assets/images/home/background.webp'
 import { routes } from '../../shared/constants/routes'
 import { Footer } from './Footer'
 import { SideNav } from './SideNav'
@@ -50,10 +50,14 @@ export function MainLayout() {
             flex: 1,
             p: { xs: 1.5, sm: 2.5, md: 4 },
             minWidth: 0,
-            backgroundImage: `url(${homeBackground})`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-            backgroundRepeat: 'no-repeat',
+            ...(location.pathname === routes.home && {
+              backgroundImage: `url(${homeBackground})`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+              backgroundRepeat: 'no-repeat',
+              backgroundAttachment: 'fixed',
+            }),
+            contain: 'layout style',
           }}
         >
           <Outlet />
