@@ -17,7 +17,7 @@ import { Link as RouterLink, NavLink, useLocation } from 'react-router-dom'
 import siteLogo from '../../assets/images/home/site-logo.svg'
 import { routes } from '../../shared/constants/routes'
 import { brandGradients } from '../../styles/designTokens'
-import { threatNavItems } from './SideNav'
+import { threatNavItems } from './threatNavItems'
 
 type TopBarProps = {
   title: string

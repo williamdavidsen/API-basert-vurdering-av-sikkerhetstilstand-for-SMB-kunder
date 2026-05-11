@@ -314,7 +314,6 @@ function PieBreakdownChart({
   const cx = size / 2
   const cy = size / 2
   const total = segments.reduce((sum, segment) => sum + segment.value, 0) || 1
-  let startAngle = -90
 
   function polarPoint(angleDeg: number, r: number): { x: number; y: number } {
     const rad = (angleDeg * Math.PI) / 180
@@ -347,12 +346,15 @@ function PieBreakdownChart({
       }}
     >
       <svg width="100%" height="100%" viewBox={`0 0 ${size} ${size}`} role="img" aria-label={`Overall security score ${totalScore} out of ${maxScore}`}>
-        {segments.map((segment) => {
+        {segments.map((segment, index) => {
           const share = segment.included ? Math.max(0, segment.value) / total : 0
           const sweep = share * 360
-          const segmentStart = startAngle
-          const segmentEnd = startAngle + sweep
-          startAngle += sweep
+          const segmentStart =
+            -90 +
+            segments
+              .slice(0, index)
+              .reduce((angle, previous) => angle + (previous.included ? Math.max(0, previous.value) / total : 0) * 360, 0)
+          const segmentEnd = segmentStart + sweep
           const midAngle = segmentStart + sweep / 2
           const labelRadius = (outerRadius + innerRadius) / 2
           const labelPoint = polarPoint(midAngle, labelRadius)

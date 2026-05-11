@@ -1,7 +1,7 @@
 import Box from '@mui/material/Box'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import type { HomeSlide } from '../model/home.types'
 
 type HeroSlideProps = {
@@ -11,11 +11,8 @@ type HeroSlideProps = {
 }
 
 export function HeroSlide({ slide, isActive, reducedMotion }: HeroSlideProps) {
-  const [hasImageError, setHasImageError] = useState(false)
-
-  useEffect(() => {
-    setHasImageError(false)
-  }, [slide.id])
+  const [errorSlideId, setErrorSlideId] = useState<string | null>(null)
+  const hasImageError = errorSlideId === slide.id
 
   if (hasImageError) {
     return (
@@ -56,7 +53,7 @@ export function HeroSlide({ slide, isActive, reducedMotion }: HeroSlideProps) {
         component="img"
         src={slide.imageUrl}
         alt={slide.imageAlt}
-        onError={() => setHasImageError(true)}
+        onError={() => setErrorSlideId(slide.id)}
         loading="lazy"
         sx={{
           position: 'absolute',

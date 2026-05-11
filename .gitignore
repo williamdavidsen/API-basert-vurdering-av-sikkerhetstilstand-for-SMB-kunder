@@ -62,3 +62,6 @@ Desktop.ini
 Test/AssessmentBatchRunner/output/
 **/test-results/
 **/playwright-report/
+artifacts/
+
+.vercel

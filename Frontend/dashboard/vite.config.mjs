@@ -17,9 +17,14 @@ export default defineConfig(({ mode }) => {
       },
       rollupOptions: {
         output: {
-          manualChunks: {
-            'mui-core': ['@mui/material'],
-            'mui-icons': ['@mui/icons-material'],
+          manualChunks(id) {
+            if (id.includes('/node_modules/@mui/material/')) {
+              return 'mui-core'
+            }
+
+            if (id.includes('/node_modules/@mui/icons-material/')) {
+              return 'mui-icons'
+            }
           },
         },
       },

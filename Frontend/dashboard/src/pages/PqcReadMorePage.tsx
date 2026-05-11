@@ -39,14 +39,14 @@ export function PqcReadMorePage() {
 
   useEffect(() => {
     if (!domain) {
-      setPqcState({ status: 'idle' })
       return
     }
 
     const controller = new AbortController()
-    setPqcState({ status: 'loading' })
 
     void (async () => {
+      setPqcState({ status: 'loading' })
+
       try {
         const assessment = await fetchAssessmentCheck(domain, controller.signal)
         if (controller.signal.aborted) return
