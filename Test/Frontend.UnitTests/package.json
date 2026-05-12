@@ -4,8 +4,7 @@
   "type": "module",
   "scripts": {
     "test": "node --max-old-space-size=1024 ./node_modules/vitest/vitest.mjs run --config vitest.config.mjs --configLoader native",
-    "test:watch": "node --max-old-space-size=1024 ./node_modules/vitest/vitest.mjs --config vitest.config.mjs --configLoader native",
-    "test:coverage": "node --max-old-space-size=1024 ./node_modules/vitest/vitest.mjs run --config vitest.coverage.config.mjs --coverage --coverage.provider=istanbul --configLoader native"
+    "test:watch": "node --max-old-space-size=1024 ./node_modules/vitest/vitest.mjs --config vitest.config.mjs --configLoader native"
   },
   "devDependencies": {
     "@emotion/react": "^11.14.0",
@@ -15,8 +14,6 @@
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.0",
     "@vitejs/plugin-react": "^6.0.1",
-    "@vitest/coverage-istanbul": "^4.1.4",
-    "@vitest/coverage-v8": "^4.1.4",
     "jsdom": "^27.0.1",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",

@@ -1,6 +1,0 @@
-# Small live-validation subset for quick automated smoke checks against a running API.
-oslomet.no
-nav.no
-cloudflare.com
-mozilla.org
-openai.com

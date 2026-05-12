@@ -24,15 +24,5 @@ export default defineConfig({
     pool: 'threads',
     maxWorkers: 1,
     fileParallelism: false,
-    coverage: {
-      provider: 'v8',
-      all: true,
-      reportsDirectory: './coverage',
-      reporter: ['text', 'json-summary', 'html'],
-      include: ['../../Frontend/dashboard/src/**/*.{ts,tsx}'],
-      exclude: [
-        '../../Frontend/dashboard/src/**/*.d.ts',
-      ],
-    },
   },
 })

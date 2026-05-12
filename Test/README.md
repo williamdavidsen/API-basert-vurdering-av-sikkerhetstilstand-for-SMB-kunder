@@ -1,27 +1,17 @@
 # Test
 
-This folder is the testing workspace for the security assessment system. It is organized to show the full testing process expected in a software testing course: strategy, risk analysis, test design, automated execution, manual/exploratory testing, and reporting.
+This folder contains a reduced test set for the security assessment application. The project is not test-focused, so the tests are kept as a minimum quality gate around the most important backend decisions, API contract shape, frontend mapping logic, and the main user flow.
 
 ## Structure
 
-- `TestPlan`: scope, risk analysis, environment, test data, and traceability.
-- `TestDesign`: test cases grouped by module and linked to testing techniques.
-- `API.UnitTests`: fast backend tests for services, mapping, and business rules.
-- `API.IntegrationTests`: API endpoint tests using an in-memory test server.
-- `Frontend.UnitTests`: Vitest tests for frontend utility and mapping logic.
-- `E2E`: Playwright tests for user flows through the dashboard, accessibility smoke, visual regression, and an opt-in live full-stack smoke flow.
-- `ManualTests`: exploratory and checklist-based manual testing documentation.
-- `Reports`: test execution summaries, coverage notes, and defect log documentation.
-- `AssessmentBatchRunner`: live API smoke validation against a small domain batch.
-- `NonFunctional`: automated load and resilience smoke helpers against the running API.
+- `API.UnitTests`: core backend service tests for assessment, SSL/TLS, headers, e-mail security, reputation, and PQC.
+- `API.IntegrationTests`: small API smoke tests for assessment endpoints and dashboard contract shape.
+- `Frontend.UnitTests`: Vitest tests for domain validation, score/status mapping, and assessment dashboard mapping.
+- `E2E`: one Playwright smoke test for the main scan flow.
+- `ManualTests`: short delivery checklist for final manual verification.
+- `Reports`: short test summary report.
 
-## Recommended Commands
-
-Quick summary:
-
-- `npm run dev` is for running the frontend application, not for running tests.
-- Frontend app setup is `cd .\Frontend`, then `npm run setup`, then `npm run dev`.
-- Use `npm run test:all` from the repository root or from `Test` to run the full automated suite, including live batch validation and non-functional smoke checks.
+## Commands
 
 From the repository root:
 
@@ -34,86 +24,37 @@ Frontend unit tests:
 
 ```powershell
 cd .\Test\Frontend.UnitTests
-npm install
 npm test
 ```
 
-End-to-end tests:
+E2E smoke test:
 
 ```powershell
 cd .\Test\E2E
-npm install
 npm test
-npm run test:update-snapshots
 ```
 
-Frontend coverage:
-
-```powershell
-cd .\Test\Frontend.UnitTests
-npm run test:coverage
-```
-
-Run the full automated regression suite in one step from the repository root:
+Full reduced test set:
 
 ```powershell
 .\run-tests.ps1
 ```
 
-Or:
+or:
 
 ```powershell
+cd .\Test
 npm run test:all
 ```
 
-From `.\Test`:
+## Strategy
 
-```powershell
-npm run test:all
-```
+The reduced strategy keeps only tests that protect the main product behavior:
 
-What `test:all` includes:
+- Unit tests for scoring and security module decisions.
+- Integration smoke tests for the API endpoints used by the dashboard.
+- Frontend unit tests for user input and score/status presentation logic.
+- One E2E smoke test for starting a scan and reaching the dashboard.
+- A manual checklist for final delivery checks that are cheaper to verify by hand.
 
-- API unit tests
-- API integration tests
-- Frontend unit tests
-- E2E Playwright tests
-- `AssessmentBatchRunner` live smoke validation
-- `NonFunctional/load-smoke.ps1`
-- `NonFunctional/resilience-smoke.ps1`
-
-What `test:all` does not include:
-
-- `ManualTests` because these are manual checklists and exploratory charters
-- `Reports` because these are generated/project documentation files
-- `TestDesign` because these are written test-case documents
-- `TestPlan` because these are planning and traceability documents
-
-Live validation helpers:
-
-```powershell
-pwsh .\Test\AssessmentBatchRunner\run-live-validation.ps1
-cd .\Test\E2E
-$env:LIVE_E2E_DOMAIN="example.com"
-npm run test:live
-```
-
-Non-functional smoke helpers:
-
-```powershell
-pwsh .\Test\NonFunctional\load-smoke.ps1
-pwsh .\Test\NonFunctional\resilience-smoke.ps1
-```
-
-## Test Levels
-
-- Unit tests verify isolated business rules and scoring decisions.
-- Integration tests verify API routing, HTTP status codes, and controller/service contracts.
-- E2E tests verify user-visible flows from domain input to assessment result.
-- Accessibility smoke verifies labelled forms, progress announcements, heading structure, and the absence of serious/critical axe violations on key pages.
-- Visual regression tests verify stable baselines for the home page, dashboard, and module detail page.
-- Manual tests cover exploratory usability and security review areas that are expensive or brittle to automate.
-
-## Course Alignment
-
-The documentation is written to support test technique explanation, evaluation, and test reporting. Each major test case should be traceable to a requirement, risk, test type, and test design technique.
+Coverage reports, visual regression, automated accessibility checks, load tests, resilience scripts, traceability matrices, live domain batch validation, and detailed test design documents were removed to keep the project focused on the application itself.

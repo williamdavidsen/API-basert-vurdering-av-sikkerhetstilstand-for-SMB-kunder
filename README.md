@@ -14,6 +14,16 @@ The current assessment includes:
 - Reputation analysis
 - PQC readiness analysis
 
+## Screenshots
+
+Home page and scan entry:
+
+![Home page](docs/screenshots/home.webp)
+
+Security dashboard result:
+
+![Security dashboard](docs/screenshots/dashboard.webp)
+
 ## Main API endpoints
 
 The API exposes dedicated endpoints for each module, one combined assessment endpoint, and one SSL detail endpoint:
@@ -38,9 +48,7 @@ The API root route also responds at:
 - `API/DAL` contains data access and repository code
 - `Frontend` contains convenience scripts that forward to the dashboard app
 - `Frontend/dashboard` contains the React, TypeScript, Vite, and Material UI dashboard
-- `Test` contains the test workspace, automation, manual-test assets, and reports
-- `Test/AssessmentBatchRunner` contains a small live batch validation tool
-- `Test/NonFunctional` contains load and resilience smoke scripts
+- `Test` contains the reduced test workspace, a manual delivery checklist, and a short summary report
 
 ## Running the project
 
@@ -111,18 +119,14 @@ npm run test:all
 The combined suite covers:
 
 - backend unit tests
-- backend integration tests
+- backend integration smoke tests
 - frontend unit tests
-- Playwright E2E tests
-- live batch validation in `Test/AssessmentBatchRunner`
-- non-functional smoke checks in `Test/NonFunctional`
+- one Playwright E2E smoke test for the main scan flow
 
-The combined suite does not run the documentation/manual-only `Test` subfolders:
+The combined suite does not run manual/report-only files:
 
 - `Test/ManualTests`
 - `Test/Reports`
-- `Test/TestDesign`
-- `Test/TestPlan`
 
 ## Notes
 
