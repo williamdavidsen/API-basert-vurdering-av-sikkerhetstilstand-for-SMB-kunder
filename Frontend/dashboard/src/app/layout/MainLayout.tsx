@@ -51,7 +51,7 @@ export function MainLayout() {
             p: { xs: 1.5, sm: 2.5, md: 4 },
             minWidth: 0,
             ...(location.pathname === routes.home && {
-              backgroundImage: `url(${homeBackground})`,
+              backgroundImage: `linear-gradient(rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0.6)), url(${homeBackground})`,
               backgroundSize: 'cover',
               backgroundPosition: 'center',
               backgroundRepeat: 'no-repeat',
