@@ -61,7 +61,7 @@ export function DomainScanForm({ onSubmitDomain }: DomainScanFormProps) {
       aria-labelledby="scan-form-title"
     >
       <Typography id="scan-form-title" component="h2" variant="h6" align="center" gutterBottom sx={{ fontWeight: 700 }}>
-        Analyse your security posture
+        Analyze your security posture
       </Typography>
 
       <Box component="form" onSubmit={handleSubmit} noValidate>
@@ -70,7 +70,7 @@ export function DomainScanForm({ onSubmitDomain }: DomainScanFormProps) {
             id="domain-input"
             name="domain"
             label="Enter domain name"
-            placeholder="e.g. firma.no"
+            placeholder="e.g. example.com"
             value={domain}
             onChange={(event) => {
               const nextValue = event.target.value
@@ -84,7 +84,7 @@ export function DomainScanForm({ onSubmitDomain }: DomainScanFormProps) {
             required
             fullWidth
             error={Boolean(error)}
-            helperText={error || 'You can enter a full URL or a domain like firma.no'}
+            helperText={error || 'You can enter a full URL or a domain like example.com'}
           />
 
           {error ? <Alert severity="error">{error}</Alert> : null}

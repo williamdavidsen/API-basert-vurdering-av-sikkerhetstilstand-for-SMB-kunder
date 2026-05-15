@@ -9,7 +9,7 @@ import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
 import { alpha } from '@mui/material/styles'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Link as RouterLink, useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { isDashboardModuleKey } from '../features/assessment/model/assessment.constants'
 import type {
   DashboardModuleKey,
@@ -27,6 +27,7 @@ import {
   fetchSslCheck,
 } from '../features/assessment/services/assessment.api'
 import { isHeaderControlMissingOrWeak } from '../features/assessment/model/assessment.mappers'
+import { ReadMoreModuleTabs } from '../features/module-detail/components/ReadMoreModuleTabs'
 import { exportElementAsPdf } from '../features/module-detail/services/pdfExport'
 import { routes } from '../shared/constants/routes'
 import { normalizeDomainInput } from '../shared/lib/domain'
@@ -75,13 +76,6 @@ type ReadMoreOutput = {
   overview?: ReadMoreField[]
   criteria: ReadMoreSection[]
 }
-
-const moduleTabs: Array<{ key: DashboardModuleKey; label: string }> = [
-  { key: 'ssl-tls', label: 'TLS / SSL' },
-  { key: 'http-headers', label: 'HTTP Headers' },
-  { key: 'email', label: 'E-mail' },
-  { key: 'reputation', label: 'Domain / IP reputation' },
-]
 
 export function ModuleDetailPage() {
   const navigate = useNavigate()
@@ -256,7 +250,6 @@ export function ModuleDetailPage() {
   }
 
   const narrative = buildNarrative(safeModuleKey, state.data.modulePayload, state.data.sslDetails)
-  const encodedDomain = encodeURIComponent(domain)
 
   return (
     <Box sx={{ maxWidth: 1040, mx: 'auto', width: '100%' }}>
@@ -277,46 +270,7 @@ export function ModuleDetailPage() {
           </Button>
         </Stack>
 
-        <Stack spacing={0.5}>
-          <Box
-            sx={{
-              display: 'flex',
-              gap: 1,
-              overflowX: 'auto',
-              pb: 0.5,
-              '&::-webkit-scrollbar': { height: 6 },
-              '&::-webkit-scrollbar-thumb': { backgroundColor: alpha('#00acc1', 0.35), borderRadius: 999 },
-            }}
-          >
-            {moduleTabs.map((tab) => {
-              const isActive = tab.key === safeModuleKey
-              return (
-                <Button
-                  key={tab.key}
-                  component={RouterLink}
-                  to={`${routes.dashboard}/${encodedDomain}/${tab.key}`}
-                  variant={isActive ? 'contained' : 'outlined'}
-                  color="secondary"
-                  sx={{
-                    flexShrink: 0,
-                    borderRadius: 999,
-                    px: 2,
-                    py: 0.75,
-                    fontWeight: 800,
-                    whiteSpace: 'nowrap',
-                    boxShadow: isActive ? '0 6px 18px rgba(0, 172, 193, 0.28)' : 'none',
-                  }}
-                  aria-current={isActive ? 'page' : undefined}
-                >
-                  {tab.label}
-                </Button>
-              )
-            })}
-          </Box>
-          <Typography variant="caption" sx={{ color: 'text.secondary', px: 0.5 }}>
-            You can view other module analyses from these tabs.
-          </Typography>
-        </Stack>
+        <ReadMoreModuleTabs domain={domain} activeTab={safeModuleKey} />
 
         <Stack ref={printableRef} spacing={2.5}>
           <Paper
@@ -474,12 +428,13 @@ function KeyValueRows({ rows }: { rows: ReadMoreField[] }) {
   )
 }
 
-function statusToChipColor(status: string): 'default' | 'success' | 'warning' | 'error' {
+function statusToChipColor(status: string): 'default' | 'success' | 'warning' | 'error' | 'info' {
   const key = status.trim().toUpperCase()
   if (key === 'PASS') return 'success'
   if (key === 'WARNING') return 'warning'
   if (key === 'ERROR') return 'error'
   if (key === 'FAIL') return 'error'
+  if (key === 'UNAVAILABLE') return 'info'
   return 'default'
 }
 

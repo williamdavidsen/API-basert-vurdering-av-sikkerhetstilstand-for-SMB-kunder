@@ -35,13 +35,24 @@ function softToneColor(tone: ModuleFactTone): 'success.dark' | 'warning.dark' | 
   return 'text.secondary'
 }
 
-function moduleStatusProps(status: string): { label: string; color: 'success.dark' | 'warning.dark' | 'error.dark' | 'text.secondary' } {
+type ModuleStatusColor = 'success.dark' | 'warning.dark' | 'error.dark' | 'info.dark' | 'text.secondary'
+
+function moduleStatusProps(status: string): { label: string; color: ModuleStatusColor } {
   const u = status.trim().toUpperCase()
   if (u === 'PASS') return { label: 'PASS', color: 'success.dark' }
   if (u === 'WARNING') return { label: 'WARNING', color: 'warning.dark' }
   if (u === 'FAIL') return { label: 'FAIL', color: 'error.dark' }
   if (u === 'ERROR') return { label: 'ERROR', color: 'error.dark' }
+  if (u === 'UNAVAILABLE') return { label: 'UNAVAILABLE', color: 'info.dark' }
+  if (u === 'NOT_EVALUATED') return { label: 'NOT EVALUATED', color: 'warning.dark' }
   return { label: status || '—', color: 'text.secondary' }
+}
+
+function moduleStatusLineColor(status: string): ModuleStatusColor {
+  const u = status.trim().toUpperCase()
+  if (u === 'UNAVAILABLE') return 'info.dark'
+  if (u === 'ERROR' || u === 'NOT_EVALUATED') return 'warning.dark'
+  return 'text.secondary'
 }
 
 export function ModuleCard({
@@ -75,6 +86,7 @@ export function ModuleCard({
       : 0
 
   const statusTag = moduleStatusProps(moduleApiStatus)
+  const statusLineColor = moduleStatusLineColor(moduleApiStatus)
 
   return (
     <Card
@@ -133,7 +145,7 @@ export function ModuleCard({
         </Stack>
 
         {statusLine?.trim() ? (
-          <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+          <Typography variant="body2" sx={{ color: statusLineColor, fontWeight: 700 }}>
             {statusLine}
           </Typography>
         ) : null}

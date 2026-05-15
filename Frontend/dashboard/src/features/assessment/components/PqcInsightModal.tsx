@@ -8,6 +8,7 @@ import IconButton from '@mui/material/IconButton'
 import Typography from '@mui/material/Typography'
 import { alpha } from '@mui/material/styles'
 import Close from '@mui/icons-material/Close'
+import { getPqcReadinessTone, pqcReadinessTextColor } from '../lib/pqcReadinessPresentation'
 import type { PqcCheckResult } from '../model/assessment.types'
 
 type PqcInsightModalProps = {
@@ -19,6 +20,7 @@ type PqcInsightModalProps = {
 }
 
 export function PqcInsightModal({ open, onClose, pqc, autoCloseSeconds = 5 }: PqcInsightModalProps) {
+  const readinessColor = pqcReadinessTextColor(getPqcReadinessTone(pqc))
   return (
     <Dialog
       open={open}
@@ -64,7 +66,7 @@ export function PqcInsightModal({ open, onClose, pqc, autoCloseSeconds = 5 }: Pq
 
         <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1.5 }}>
           Status:{' '}
-          <Box component="span" sx={{ fontWeight: 900, color: 'warning.dark' }}>
+          <Box component="span" sx={{ fontWeight: 900, color: readinessColor }}>
             {pqc.readinessLevel}
           </Box>
         </Typography>
