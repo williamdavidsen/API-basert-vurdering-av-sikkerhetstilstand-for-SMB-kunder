@@ -14,16 +14,6 @@ The current assessment includes:
 - Reputation analysis
 - PQC readiness analysis
 
-## Screenshots
-
-Home page and scan entry:
-
-![Home page](docs/screenshots/home.webp)
-
-Security dashboard result:
-
-![Security dashboard](docs/screenshots/dashboard.webp)
-
 ## Main API endpoints
 
 The API exposes dedicated endpoints for each module, one combined assessment endpoint, and one SSL detail endpoint:
