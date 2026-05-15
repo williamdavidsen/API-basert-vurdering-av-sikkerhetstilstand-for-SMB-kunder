@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { threatTopics, type ThreatTopic } from '../../../shared/constants/threatKeys'
-import { threatLandscapeContent } from '../data/threatLandscape.content.no'
+import { threatLandscapeContent } from '../data/threatLandscape.content'
 import type { ThreatLandscapeContent } from '../model/threatLandscape.types'
 
 const fallbackTopic: ThreatTopic = threatTopics.phishingSpoofing

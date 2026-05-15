@@ -8,6 +8,7 @@ import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
 import { alpha } from '@mui/material/styles'
 import { Link as RouterLink } from 'react-router-dom'
+import { getPqcReadinessTone, pqcReadinessChipColor } from '../lib/pqcReadinessPresentation'
 import type { PqcCheckResult } from '../model/assessment.types'
 import { shadows } from '../../../styles/designTokens'
 
@@ -17,14 +18,9 @@ type PqcOverviewCardProps = {
   readMoreTo: string
 }
 
-function readinessTone(readinessLevel: string): 'success' | 'warning' | 'default' {
-  const text = readinessLevel.trim().toLowerCase()
-  if (text.includes('hybrid pqc')) return 'success'
-  if (text.includes('not supported') || text.includes('unknown')) return 'warning'
-  return 'default'
-}
-
 export function PqcOverviewCard({ domain, pqc, readMoreTo }: PqcOverviewCardProps) {
+  const readinessTone = getPqcReadinessTone(pqc)
+  const readinessChipColor = pqcReadinessChipColor(readinessTone)
   const transitionNote = pqc.pqcDetected
     ? 'Please continue maturing your PQC transition plan to maintain long-term cryptographic resilience.'
     : 'Please begin the transition to PQC to improve long-term cryptographic resilience.'
@@ -86,11 +82,7 @@ export function PqcOverviewCard({ domain, pqc, readMoreTo }: PqcOverviewCardProp
                 {domain}
               </Typography>
             </Stack>
-            <Chip
-              label={pqc.readinessLevel}
-              color={readinessTone(pqc.readinessLevel)}
-              variant={readinessTone(pqc.readinessLevel) === 'default' ? 'outlined' : 'filled'}
-            />
+            <Chip label={pqc.readinessLevel} color={readinessChipColor} variant="filled" />
           </Stack>
 
           <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5}>

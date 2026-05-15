@@ -32,9 +32,9 @@ const helpText = import.meta.env.DEV
   ? `Start the API from the API folder (default: ${apiBaseForMessage}), then retry. Vite proxies /api to that host; set VITE_DEV_API_PROXY in .env.development if your API uses another URL.`
   : `API request failed. Please try again. Backend: ${apiBaseForMessage}`
 
-function formatNorwegianDateTime(iso: string): string {
+function formatDateTime(iso: string): string {
   try {
-    return new Intl.DateTimeFormat('nb-NO', { dateStyle: 'short', timeStyle: 'medium' }).format(new Date(iso))
+    return new Intl.DateTimeFormat('en-GB', { dateStyle: 'short', timeStyle: 'medium' }).format(new Date(iso))
   } catch {
     return iso
   }
@@ -236,7 +236,7 @@ export function SecurityDashboardPage() {
               Back to home
             </Button>
             <Typography variant="body2" sx={{ color: 'text.secondary', alignSelf: 'center' }}>
-              Last scanned: {formatNorwegianDateTime(scannedAtIso)}
+              Last scanned: {formatDateTime(scannedAtIso)}
             </Typography>
           </Stack>
         </Stack>

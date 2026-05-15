@@ -165,12 +165,12 @@ function hideBulletIfSameAsCallout(
   return bulletWithPrefix
 }
 
-function toneTlsStatus(status: string): ModuleFactTone {
+function toneModuleApiStatus(status: string): ModuleFactTone {
   const u = status.trim().toUpperCase()
   if (u === 'PASS') return 'success'
   if (u === 'WARNING') return 'warning'
   if (u === 'FAIL') return 'error'
-  if (u === 'ERROR') return 'neutral'
+  if (u === 'ERROR' || u === 'UNAVAILABLE' || u === 'NOT_EVALUATED') return 'warning'
   return 'neutral'
 }
 
@@ -353,6 +353,7 @@ export function buildModuleCards(bundle: AssessmentDashboardBundle): ModuleCardV
     reputation.summary.maliciousDetections,
   )
   const reputationIncluded = assessment.modules.reputation.included
+  const reputationUnavailable = reputation.status.trim().toUpperCase() === 'UNAVAILABLE'
 
   const reputationFacts: ModuleCardFact[] = reputationIncluded
     ? [
@@ -364,8 +365,8 @@ export function buildModuleCards(bundle: AssessmentDashboardBundle): ModuleCardV
         },
       ]
     : [
-        { label: 'Verdict', value: 'Not evaluated', tone: 'neutral' },
-        { label: 'Signals', value: 'Not evaluated', tone: 'neutral' },
+        { label: 'Verdict', value: 'Not evaluated', tone: reputationUnavailable ? 'warning' : 'neutral' },
+        { label: 'Signals', value: 'Not evaluated', tone: reputationUnavailable ? 'warning' : 'neutral' },
       ]
 
   const repBullet =
@@ -375,7 +376,17 @@ export function buildModuleCards(bundle: AssessmentDashboardBundle): ModuleCardV
       ? `Sampled detections: malicious ${reputation.summary.maliciousDetections}, suspicious ${reputation.summary.suspiciousDetections}.`
       : 'Domain / IP reputation was not included in the final weighted score because the upstream provider could not be reached reliably.')
 
-  const repCallout = reputation.alerts.find((a) => a.type.toUpperCase().includes('CRITICAL'))
+  const repCriticalCallout = reputation.alerts.find((a) => a.type.toUpperCase().includes('CRITICAL'))
+  const reputationCallout = repCriticalCallout
+    ? { message: repCriticalCallout.message, tone: 'critical' as const }
+    : reputationUnavailable
+      ? {
+          message:
+            reputation.alerts[0]?.message ||
+            'Domain / IP reputation data is temporarily unavailable and was excluded from the weighted score.',
+          tone: 'warning' as const,
+        }
+      : undefined
 
   const hstsVal = formatHeaderPresence(headers.criteria.strictTransportSecurity)
   const cspVal = formatHeaderPresence(headers.criteria.contentSecurityPolicy)
@@ -390,7 +401,7 @@ export function buildModuleCards(bundle: AssessmentDashboardBundle): ModuleCardV
       moduleGrade: sslGrade,
       moduleApiStatus: ssl.status,
       scoreFill: { current: ssl.overallScore, max: ssl.maxScore },
-      facts: [{ label: 'TLS status', value: ssl.status, tone: toneTlsStatus(ssl.status) }],
+      facts: [{ label: 'TLS status', value: ssl.status, tone: toneModuleApiStatus(ssl.status) }],
       bullet: hideBulletIfSameAsCallout(
         sslBullet ? `• ${sslBullet}` : undefined,
         sslCallout?.message,
@@ -448,15 +459,13 @@ export function buildModuleCards(bundle: AssessmentDashboardBundle): ModuleCardV
       moduleGrade: reputationIncluded ? gradeFromPercent(modulePercent(reputation.overallScore, reputation.maxScore)) : '—',
       moduleApiStatus: reputation.status,
       scoreFill: reputationIncluded ? { current: reputation.overallScore, max: reputation.maxScore } : undefined,
-      statusLine: reputationIncluded ? undefined : 'Not evaluated',
+      statusLine: reputationIncluded ? undefined : reputationUnavailable ? 'Provider unavailable' : 'Not evaluated',
       facts: reputationFacts,
       bullet: hideBulletIfSameAsCallout(
         repBullet ? `• ${repBullet}` : undefined,
-        repCallout?.message,
+        reputationCallout?.message,
       ),
-      callout: repCallout
-        ? { message: repCallout.message, tone: 'critical' }
-        : undefined,
+      callout: reputationCallout,
     },
   ]
 
