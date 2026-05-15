@@ -7,7 +7,7 @@
     "test:headed": "node --max-old-space-size=1024 ./node_modules/@playwright/test/cli.js test --config playwright.config.mjs --headed"
   },
   "devDependencies": {
-    "@playwright/test": "^1.57.0",
-    "@types/node": "^25.6.0"
+    "@playwright/test": "^1.60.0",
+    "@types/node": "^25.8.0"
   }
 }

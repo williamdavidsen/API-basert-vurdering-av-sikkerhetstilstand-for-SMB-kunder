@@ -20,6 +20,13 @@ coverage.*
 .dotnet/
 .dotnet-cli-home/
 
+# Local editor/history snapshots
+.history/
+
+# Build/test artifact folders
+**/.artifacts/
+**/dist/
+
 # Node dependencies
 **/node_modules/
 
